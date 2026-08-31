@@ -1,6 +1,6 @@
 def imprimir_Usuarios(matriz):
     print("="*60)
-    print(f"{"Usuarios":^42}")
+    print(f"{"Usuarios":42}")
     print("="*60)
     print(f"{"Id":<10}{"Nombre":<12}{"Edad":<8}{"Mail":<20}{"Telefono":<12}")
     print("-" *60)
@@ -35,18 +35,26 @@ def eliminar_Usuario(matriz):
         i = i+1
     print("No se encontro el id de usuario")
 
-datos = [
-    [1234, "Juan", 22, "juan@gmail.com", 11553834],
-    [8254, "Agus", 32, "agus@gmail.com", 11512294],
+usuarios = [
+    [1234, "Juan",  18, "juan@gmail.com",  11553834],
+    [8254, "Agus",  12, "agus@gmail.com",  11512294],
     [4567, "Maria", 25, "maria@gmail.com", 11456789],
-    [7890, "Pedro", 28, "pedro@gmail.com", 11654321],
+    [2130, "pablo", 22, "pablo@gmail.com", 11654321],
+    [1101, "Pedro", 69, "pedro@gmail.com", 11452991],
+    [3653, "facu",  27, "facu@gmail.com",  11635381],
+    [9999, "sofi",  11, "sofi@gmail.com",  11421199]
 ]
 
-imprimir_Usuarios(datos)
-#agregar_Usuario(datos)
-#imprimir_Usuarios(datos)
-eliminar_Usuario(datos)
+#imprimir_Usuarios(usuarios)
+#agregar_Usuario(usuarios)
+#imprimir_Usuarios(usuarios)
+#eliminar_Usuario(usuarios)
+#imprimir_Usuarios(usuarios)
 
-imprimir_Usuarios(datos)
+ordenId   = sorted(usuarios, key=lambda fila: fila[0])               
+ordenEdad = sorted(usuarios, key=lambda fila: fila[2])
+#imprimir_Usuarios(ordenEdad)
 
 
+mayores = list(filter(lambda usuarios: usuarios[2] >= 18, usuarios))
+#imprimir_Usuarios(mayores)
