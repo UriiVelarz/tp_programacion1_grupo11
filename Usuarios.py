@@ -64,13 +64,28 @@ mayores = list(filter(lambda usuarios: usuarios[2] >= 18, usuarios))
 #imprimir_Usuarios(mayores)
 
 def modificar_Usuario(matriz):
-    id_buscado = int(input("Ingresar id del usuario a modificar: "))
-    for fila in matriz:
-        if fila[0] == id_buscado:
-            fila[1] = input("Ingresar nuevo nombre: ")
-            fila[2] = int(input("Ingresar nueva edad: "))
-            fila[3] = input("Ingresar nuevo mail: ")
-            fila[4] = input("Ingresar nuevo telefono: ")
+    usuario_encontrado = False
+
+    while not usuario_encontrado:
+        id_buscado = int(input("Ingresar id del usuario a modificar: "))
+
+        for fila in matriz:
+            if fila[0] == id_buscado:
+                usuario_encontrado = True
+                fila[1] = input("Ingresar nuevo nombre: ")
+                fila[2] = int(input("Ingresar nueva edad: "))
+                fila[3] = input("Ingresar nuevo mail: ")
+                fila[4] = int(input("Ingresar nuevo telefono: "))
+                print("Usuario modificado correctamente")
+
+        if not usuario_encontrado:
+            print("Usuario no encontrado. Intente nuevamente.")
+
+if __name__ == "__main__":
+    imprimir_Usuarios(usuarios)
+    modificar_Usuario(usuarios)
+    imprimir_Usuarios(usuarios)
+
 
 #imprimir_Usuarios(usuarios)
 #modificar_Usuario(usuarios)
