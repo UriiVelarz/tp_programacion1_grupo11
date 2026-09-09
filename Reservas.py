@@ -14,6 +14,7 @@ def imprimir_Reservas(matriz):
          [id_reserva, sala, id_usuario, fecha, inicio, fin].
     pos: devuelve por pantalla la matriz de reservas fomateada.
     '''
+<<<<<<< HEAD
      
     print("="*70)
     print(f"{"Reservas":42}")
@@ -28,6 +29,22 @@ def imprimir_Reservas(matriz):
         fecha       = matriz [i][3]
         inicio      = matriz [i][4]
         fin         = matriz [i][5]
+=======
+
+    print("="*70)
+    print(f"{'Reservas':42}")
+    print("="*70)
+    print(f"{'Id_Reserva':<12}{'Sala':<8}{'Id_Usuario':<12}{'Fecha':<14}{'Inicio':<12}{'Fin':<12}")
+    print("-" *70)
+
+    for i in range(len(matriz)):
+        id_Reserva = matriz[i][0]
+        sala = matriz[i][1]
+        id_usuario = matriz[i][2]
+        fecha = matriz[i][3]
+        inicio = matriz[i][4]
+        fin = matriz[i][5]
+>>>>>>> AgustinT
         print(f"{id_Reserva:<12}{sala:<8}{id_usuario:<12}{fecha:<14}{inicio:<12}{fin:<12}")
 
 def realizar_Reserva(matriz):
@@ -84,6 +101,7 @@ def modificar_Reserva(matriz):
         id_buscado = int(input("Ingresar id de la reserva a modificar: "))
 
         for fila in matriz:
+<<<<<<< HEAD
                     if fila[0] == id_buscado:
                         reserva_encontrada = True
                         fila[1] = input("Ingresar nuevo id de sala:: ")
@@ -98,3 +116,16 @@ def modificar_Reserva(matriz):
 
 realizar_Reserva(reservas)
 imprimir_Reservas(reservas)
+=======
+            if fila[0] == id_buscado:
+                reserva_encontrada = True
+                fila[1] = input("Ingresar nuevo id de sala:: ")
+                fila[2] = int(input("Ingresar nuevo id de usuario: "))
+                fila[3] = input("Ingresar nueva fecha de reserva:  ")
+                fila[4] = input("Ingresar nuevo horario de inicio: ")
+                fila[5] = input("Ingresar nuevo horaio de fin: ")
+                print("Reserva modificada correctamente")
+
+        if not reserva_encontrada:
+            print("Reserva no encontrada. Intente nuevamente.")
+>>>>>>> AgustinT

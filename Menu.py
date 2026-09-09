@@ -1,6 +1,7 @@
 import Reservas
 import Usuarios
 
+<<<<<<< HEAD
 def menu_principal():
     usuarios = []
     reservas = []
@@ -14,6 +15,22 @@ def menu_principal():
         print ("5. cerrar sesion")
         print ("0. Salir")
         opcion = input ()
+=======
+usuarios = Usuarios.usuarios
+reservas = Reservas.reservas
+
+
+def menu_principal():
+    while True:
+        print("\n=== Sistema de reserva de salas ===")
+        print("1. Registrarse")
+        print("2. Iniciar sesion")
+        print("3. Realizar reserva")
+        print("4. Ver reservas")
+        print("5. cerrar sesion")
+        print("0. Salir")
+        opcion = input()
+>>>>>>> AgustinT
 
         if opcion == "1":
             Usuarios.registrar_Usuario(usuarios)
@@ -31,4 +48,10 @@ def menu_principal():
         else:
             print("Opcion invalida, intenta otra vez.")
 
+<<<<<<< HEAD
 #menu_principal()
+=======
+
+if __name__ == "__main__":
+    menu_principal()
+>>>>>>> AgustinT

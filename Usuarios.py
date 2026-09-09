@@ -1,92 +1,96 @@
-usuarios = [
-    [1234, "Juan",  18, "juan@gmail.com",  11553834],
-    [8254, "Agus",  12, "agus@gmail.com",  11512294],
-    [4567, "Maria", 25, "maria@gmail.com", 11456789],
-    [2130, "pablo", 22, "pablo@gmail.com", 11654321],
-    [1101, "Pedro", 69, "pedro@gmail.com", 11452991],
-    [3653, "facu",  27, "facu@gmail.com",  11635381],
-    [9999, "sofi",  11, "sofi@gmail.com",  11421199]
-]
+usuarios = {
+    1234: {"nombre": "Juan", "edad": 18, "mail": "juan@gmail.com", "telefono": 11553834},
+    8254: {"nombre": "Agus", "edad": 12, "mail": "agus@gmail.com", "telefono": 11512294},
+    4567: {"nombre": "Maria", "edad": 25, "mail": "maria@gmail.com", "telefono": 11456789},
+    2130: {"nombre": "pablo", "edad": 22, "mail": "pablo@gmail.com", "telefono": 11654321},
+    1101: {"nombre": "Pedro", "edad": 69, "mail": "pedro@gmail.com", "telefono": 11452991},
+    3653: {"nombre": "facu", "edad": 27, "mail": "facu@gmail.com", "telefono": 11635381},
+    9999: {"nombre": "sofi", "edad": 11, "mail": "sofi@gmail.com", "telefono": 11421199}
+}
 
-def imprimir_Usuarios(matriz):
-    ''' 
-    pre: recibe una matriz de usuarios, donde cada fila representa un usuario con sus datos [id, nombre, edad, mail, telefono].
-    pos: devuelve por pantalla la matriz de usuarios fomateada.
-    ''' 
-    print("="*65)
-    print(f"{"Usuarios":42}")
-    print("="*65)
-    print(f"{"Id":<10}{"Nombre":<12}{"Edad":<8}{"Mail":<25}{"Telefono":<12}")
-    print("-" *65)
 
-    for i in range (len(matriz)):
-        id       = matriz [i][0]
-        nombre   = matriz [i][1]
-        edad     = matriz [i][2]
-        mail     = matriz [i][3]
-        telefono = matriz [i][4]
-        print(f"{id:<10}{nombre:<12}{edad:<8}{mail:<25}{telefono:<12}")
+def imprimir_Usuarios(usuarios):
+    '''
+    pre: recibe un diccionario de usuarios, donde cada clave es el id
+         y cada valor es otro diccionario con los datos del usuario.
+    pos: devuelve por pantalla los usuarios formateados.
+    '''
+    print("=" * 65)
+    print(f"{'Usuarios':42}")
+    print("=" * 65)
+    print(f"{'Id':<10}{'Nombre':<12}{'Edad':<8}{'Mail':<25}{'Telefono':<12}")
+    print("-" * 65)
 
-def registrar_Usuario(matriz):
-    ''' 
-        pre: recibe una matriz de usuarios, donde cada fila representa un usuario con sus datos [id, nombre, edad, mail, telefono].
-        pos: solicita los datos para registrar a un nuevo usuario. si el id ya existe, muestra error y finaliza. si el id es unico, 
-             agrega un usuario a la matriz al final de la lista y muestra un mensaje de exito.
-    ''' 
+    for id_usuario, usuario in usuarios.items():
+        print(f"{id_usuario:<10}{usuario['nombre']:<12}{usuario['edad']:<8}{usuario['mail']:<25}{usuario['telefono']:<12}")
 
-    id       = int(input("Ingresar Id: "))
-    # verifico si el id esta en la matriz
-    for usuario in matriz:
-        if usuario[0] == id:
-            print("Id ya registrado")
-            return
-    nombre   = input("Ingresar Nombre: ")
-    edad     = int(input("Ingresar Edad: "))
-    mail     = input("Ingresar Mail: ")
+
+def registrar_Usuario(usuarios):
+    '''
+        pre: recibe un diccionario de usuarios.
+        pos: solicita los datos para registrar a un nuevo usuario. si el id ya existe,
+             muestra error y finaliza. si el id es unico,
+             agrega un usuario al diccionario y muestra un mensaje de exito.
+    '''
+
+    id_usuario = int(input("Ingresar Id: "))
+
+    if id_usuario in usuarios:
+        print("Id ya registrado")
+        return
+
+    nombre = input("Ingresar Nombre: ")
+    edad = int(input("Ingresar Edad: "))
+    mail = input("Ingresar Mail: ")
     telefono = int(input("Ingresar Telefono: "))
 
-    nuevoUsuario = [id, nombre, edad, mail, telefono]
+    usuarios[id_usuario] = {
+        "nombre": nombre,
+        "edad": edad,
+        "mail": mail,
+        "telefono": telefono
+    }
 
-    matriz.append(nuevoUsuario)
     print("Usuario registrado correctamente")
 
-def eliminar_Usuario(matriz):
-    ''' 
-    pre: recibe una matriz de usuarios, donde cada fila representa un usuario con sus datos [id, nombre, edad, mail, telefono].
-    pos: solicita un id por consola. si el id existe en la matriz, elimina al usuario de la matriz original y muestra un mensaje de exito.
-         si no existe, muestra un mensaje de error.
-    ''' 
 
-    id = int(input("Ingresar Id: "))
-    i = 0
-    while i < len(matriz):
-        if matriz [i][0] == id:
-            matriz.remove(matriz[i])
-            print("Usuario eliminado correctamente")
-            return
-        i = i+1
+def eliminar_Usuario(usuarios):
+    '''
+    pre: recibe un diccionario de usuarios.
+    pos: solicita un id por consola. si el id existe en el diccionario,
+         elimina al usuario y muestra un mensaje de exito.
+         si no existe, muestra un mensaje de error.
+    '''
+
+    id_usuario = int(input("Ingresar Id: "))
+
+    if id_usuario in usuarios:
+        del usuarios[id_usuario]
+        print("Usuario eliminado correctamente")
+        return
+
     print("No se encontro el id de usuario")
 
-def modificar_Usuario(matriz):
-    ''' 
-        pre: recibe una matriz de usuarios, donde cada fila representa un usuario con sus datos [id, nombre, edad, mail, telefono].
-        pos: solicita un id por consola hasta encontrar uno valido en la matriz. una vez encontrado, solicita los datos a modificar
-             (nombre, edad, mail, telefono) para reemplazar a los valores originales del usuario y muestra un mensaje de exito.
-    ''' 
 
-    usuario_encontrado = False
+def modificar_Usuario(usuarios):
+    '''
+        pre: recibe un diccionario de usuarios.
+        pos: solicita un id por consola. si existe, solicita los datos a modificar
+             (nombre, edad, mail, telefono) para reemplazar los valores originales
+             del usuario y muestra un mensaje de exito.
+    '''
 
-    while not usuario_encontrado:
-        id_buscado = int(input("Ingresar id del usuario a modificar: "))
+    id_buscado = int(input("Ingresar id del usuario a modificar: "))
 
-        for fila in matriz:
-            if fila[0] == id_buscado:
-                usuario_encontrado = True
-                fila[1] = input("Ingresar nuevo nombre: ")
-                fila[2] = int(input("Ingresar nueva edad: "))
-                fila[3] = input("Ingresar nuevo mail: ")
-                fila[4] = int(input("Ingresar nuevo telefono: "))
-                print("Usuario modificado correctamente")
+    if id_buscado not in usuarios:
+        print("Usuario no encontrado")
+        return
 
-        if not usuario_encontrado:
-            print("Usuario no encontrado. Intente nuevamente.")
+    usuario = usuarios[id_buscado]
+    usuario["nombre"] = input("Ingresar nuevo nombre: ")
+    usuario["edad"] = int(input("Ingresar nueva edad: "))
+    usuario["mail"] = input("Ingresar nuevo mail: ")
+    usuario["telefono"] = int(input("Ingresar nuevo telefono: "))
+
+    print("Usuario modificado correctamente")
+
