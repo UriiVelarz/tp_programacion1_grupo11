@@ -68,7 +68,7 @@ def eliminar_Reserva(matriz):
             print("Reserva eliminado correctamente")
             return
         i = i+1
-    print("No se encontro el id de usuario")
+    print("No se encontro el id de Sala")
 
 def modificar_Reserva(matriz):
     '''
@@ -86,7 +86,7 @@ def modificar_Reserva(matriz):
         for fila in matriz:
                     if fila[0] == id_buscado:
                         reserva_encontrada = True
-                        fila[1] = input("Ingresar nuevo id de sala:: ")
+                        fila[1] = input("Ingresar nuevo id de sala: ")
                         fila[2] = int(input("Ingresar nuevo id de usuario: "))
                         fila[3] = input("Ingresar nueva fecha de reserva:  ")
                         fila[4] = (input("Ingresar nuevo horario de inicio: "))
@@ -95,6 +95,3 @@ def modificar_Reserva(matriz):
 
         if not reserva_encontrada:
                     print("Reserva no encontrada. Intente nuevamente.")
-
-realizar_Reserva(reservas)
-imprimir_Reservas(reservas)
