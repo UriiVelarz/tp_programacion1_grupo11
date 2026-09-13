@@ -3,8 +3,8 @@ usuarios = {
     8254: {"nombre": "Agus", "edad": 12, "mail": "agus@gmail.com", "telefono": 11512294},
     4567: {"nombre": "Maria", "edad": 25, "mail": "maria@gmail.com", "telefono": 11456789},
     2130: {"nombre": "pablo", "edad": 22, "mail": "pablo@gmail.com", "telefono": 11654321},
-    1101: {"nombre": "Pedro", "edad": 69, "mail": "pedro@gmail.com", "telefono": 11452991},
-    3653: {"nombre": "facu", "edad": 27, "mail": "facu@gmail.com", "telefono": 11635381},
+    1101: {"nombre": "Pedro", "edad": 69, "mail": "pedroherrera@gmail.com", "telefono": 11452991},
+    3653: {"nombre": "facu", "edad": 27, "mail": "facundogozio@gmail.com", "telefono": 11635381},
     9999: {"nombre": "sofi", "edad": 11, "mail": "sofi@gmail.com", "telefono": 11421199}
 }
 
@@ -22,7 +22,10 @@ def imprimir_Usuarios(usuarios):
     print("-" * 65)
 
     for id_usuario, usuario in usuarios.items():
-        print(f"{id_usuario:<10}{usuario['nombre']:<12}{usuario['edad']:<8}{usuario['mail']:<25}{usuario['telefono']:<12}")
+        mail = usuario['mail']
+        if len(mail) > 20:
+            mail = mail[:20] + "..."
+        print(f"{id_usuario:<10}{usuario['nombre']:<12}{usuario['edad']:<8}{mail:<25}{usuario['telefono']:<12}")
 
 
 def registrar_Usuario(usuarios):
@@ -93,4 +96,3 @@ def modificar_Usuario(usuarios):
     usuario["telefono"] = int(input("Ingresar nuevo telefono: "))
 
     print("Usuario modificado correctamente")
-

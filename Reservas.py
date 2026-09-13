@@ -28,6 +28,10 @@ def imprimir_Reservas(matriz):
         fecha = matriz[i][3]
         inicio = matriz[i][4]
         fin = matriz[i][5]
+
+        if len(fecha) > 10:
+            fecha = fecha [:10] + "..."
+
         print(f"{id_Reserva:<12}{sala:<8}{id_usuario:<12}{fecha:<14}{inicio:<12}{fin:<12}")
 
 def realizar_Reserva(matriz):
