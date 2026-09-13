@@ -1,11 +1,4 @@
-usuarios = [
-    ["admin", "admin123", "administrador"],
-    ["FacundoGozio", "Facundo2026", "cliente"],
-    ["TomasGallo", "Tomas2026", "cliente"],
-    ["AgustinT", "Agustin2026", "cliente"],
-    ["Uri_Velardez", "Uri2026", "cliente"],
-    ["Fauzi", "Fauzi2026", "cliente"]
-]
+usuarios = []
 MAX_INTENTOS = 3
 
 

@@ -54,34 +54,6 @@ def consultar_disponibilidad(sala, dia):
     else:
         return f"La {nombre_sala} no esta disponible el dia {dias[dia - 1]}."
 
-# Menú principal
-#while True:
-#    print("\n=== RESERVA DE SALAS ===")
-#    print("1. Ver matriz de disponibilidad")
-#    print("2. Consultar día disponible por coordenadas")
-#    print("3. Salir")
-#
-#    opcion = input("Seleccione una opción: ")
-#
-#    if opcion == "1":
-#        mostrar_matriz()
-#
-#    elif opcion == "2":
-#        try:
-#            sala = int(input("Ingrese la sala (1 a 3): "))
-#            dia = int(input("Ingrese el día (1 a 7): "))
-#            print(consultar_disponibilidad(sala, dia))
-#        except ValueError:
-#            print("Debe ingresar valores numéricos.")
-#
-#    elif opcion == "3":
-#        print("Gracias que tenga un buen día.")
-#        break
-#
-#    else:
-#        print("Opción inválida.")
-
-
 def imprimir_Salas(matriz):
     '''
     pre: recibe una matriz de salas, donde cada fila representa una sala con sus datos
