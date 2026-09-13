@@ -1,39 +1,36 @@
-
-# Columnas: [usuario, clave, rol]
 usuarios = [
     ["admin", "admin123", "administrador"],
     ["FacundoGozio", "Facundo2026", "cliente"],
     ["TomasGallo", "Tomas2026", "cliente"],
     ["AgustinT", "Agustin2026", "cliente"],
-<<<<<<< HEAD
     ["Uri_Velardez", "Uri2026", "cliente"],
-=======
-    ["Uri_Velardez", "Uri2026", "cliente"]
->>>>>>> dd757eadc4eb097043ea2529dba6b970c930c944
     ["Fauzi", "Fauzi2026", "cliente"]
 ]
 MAX_INTENTOS = 3
 
 
 def buscar_usuario(nombre):
-    """Devuelve la fila del usuario si existe, o None."""
-    encontrados = list(filter(lambda u: u[0] == nombre, usuarios))
-    return encontrados[0] if encontrados else None
+    for i in usuarios:
+        if i[0].lower() == nombre:
+            return i
+    return None
 
 
 def clave_valida(clave):
-    """Minimo 6 caracteres, con al menos una letra y un numero."""
-    tiene_letra = tiene_numero = False
+    letras = "abcdefghijklmnopqrstuvwxyz"
+    numeros = "0123456789"
+    tiene_letra = False
+    tiene_numero = False
     for c in clave:
-        if c.isalpha():
+        if c.lower() in letras:
             tiene_letra = True
-        elif c.isdigit():
+        elif c in numeros:
             tiene_numero = True
     return len(clave) >= 6 and tiene_letra and tiene_numero
 
 
 def registrar_usuario():
-    nombre = input("Nuevo nombre de usuario: ").strip().lower()
+    nombre = input("Nuevo nombre de usuario: ").lower()
     if nombre == "" or buscar_usuario(nombre) is not None:
         print("Nombre vacio o ya registrado.")
         return None
@@ -50,7 +47,7 @@ def registrar_usuario():
 def iniciar_sesion():
     intentos = 0
     while intentos < MAX_INTENTOS:
-        nombre = input("Usuario: ").strip().lower()
+        nombre = input("Usuario: ").lower()
         clave = input("Clave: ")
         u = buscar_usuario(nombre)
         if u is not None and u[1] == clave:
@@ -65,7 +62,9 @@ def iniciar_sesion():
 def menu_login():
     while True:
         print("\n--- ACCESO AL SISTEMA ---")
-        print("1. Iniciar sesion\n2. Registrarse\n3. Salir")
+        print("1. Iniciar sesion")
+        print("2. Registrarse")
+        print("3. Salir")
         opcion = input("Opcion: ")
         if opcion == "1":
             u = iniciar_sesion()
