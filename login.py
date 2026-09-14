@@ -30,11 +30,17 @@ def clave_valida(clave):
 
 
 def registrar_usuario():
-    nombre = input("Nuevo nombre de usuario: ").lower()
+    nombre = input("Nuevo nombre de usuario o -1 para volver al menu principal: ").lower()
+    if nombre == "-1":
+        print("Volviendo al menu principal...")
+        return None
     if nombre == "" or buscar_usuario(nombre) is not None:
         print("Nombre vacio o ya registrado.")
         return None
     clave = input("Clave (min. 6 caracteres, letras y numeros): ")
+    if clave == "-1":
+        print("Volviendo al menu principal...")
+        return None
     if not clave_valida(clave):
         print("La clave no cumple los requisitos.")
         return None
@@ -47,8 +53,14 @@ def registrar_usuario():
 def iniciar_sesion():
     intentos = 0
     while intentos < MAX_INTENTOS:
-        nombre = input("Usuario: ").lower()
-        clave = input("Clave: ")
+        nombre = input("Usuario o -1 para volver al menu principal: ").lower()
+        if nombre == "-1":
+            print("Volviendo al menu principal...")
+            return None
+        clave = input("Clave o -1 para volver al menu principal: ")
+        if clave == "-1":
+            print("Volviendo al menu principal...")
+            return None
         u = buscar_usuario(nombre)
         if u is not None and u[1] == clave:
             print("Bienvenido/a,", nombre, "(" + u[2] + ")")

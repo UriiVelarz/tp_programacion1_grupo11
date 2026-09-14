@@ -9,6 +9,13 @@ usuarios = {
 }
 
 
+def volver_al_menu(valor):
+    if valor == "-1":
+        print("Volviendo al menu principal...")
+        return True
+    return False
+
+
 def imprimir_Usuarios(usuarios):
     '''
     pre: recibe un diccionario de usuarios, donde cada clave es el id
@@ -36,16 +43,32 @@ def registrar_Usuario(usuarios):
              agrega un usuario al diccionario y muestra un mensaje de exito.
     '''
 
-    id_usuario = int(input("Ingresar Id: "))
+    id_usuario_input = input("Ingresar Id o -1 para volver al menu principal: ")
+    if volver_al_menu(id_usuario_input):
+        return
+    id_usuario = int(id_usuario_input)
 
     if id_usuario in usuarios:
         print("Id ya registrado")
         return
 
-    nombre = input("Ingresar Nombre: ")
-    edad = int(input("Ingresar Edad: "))
-    mail = input("Ingresar Mail: ")
-    telefono = int(input("Ingresar Telefono: "))
+    nombre = input("Ingresar Nombre o -1 para volver al menu principal: ")
+    if volver_al_menu(nombre):
+        return
+
+    edad_input = input("Ingresar Edad o -1 para volver al menu principal: ")
+    if volver_al_menu(edad_input):
+        return
+    edad = int(edad_input)
+
+    mail = input("Ingresar Mail o -1 para volver al menu principal: ")
+    if volver_al_menu(mail):
+        return
+
+    telefono_input = input("Ingresar Telefono o -1 para volver al menu principal: ")
+    if volver_al_menu(telefono_input):
+        return
+    telefono = int(telefono_input)
 
     usuarios[id_usuario] = {
         "nombre": nombre,
@@ -65,7 +88,10 @@ def eliminar_Usuario(usuarios):
          si no existe, muestra un mensaje de error.
     '''
 
-    id_usuario = int(input("Ingresar Id: "))
+    id_usuario_input = input("Ingresar Id: ")
+    if volver_al_menu(id_usuario_input):
+        return
+    id_usuario = int(id_usuario_input)
 
     if id_usuario in usuarios:
         del usuarios[id_usuario]
@@ -83,16 +109,35 @@ def modificar_Usuario(usuarios):
              del usuario y muestra un mensaje de exito.
     '''
 
-    id_buscado = int(input("Ingresar id del usuario a modificar: "))
+    id_buscado_input = input("Ingresar id del usuario a modificar: ")
+    if volver_al_menu(id_buscado_input):
+        return
+    id_buscado = int(id_buscado_input)
 
     if id_buscado not in usuarios:
         print("Usuario no encontrado")
         return
 
     usuario = usuarios[id_buscado]
-    usuario["nombre"] = input("Ingresar nuevo nombre: ")
-    usuario["edad"] = int(input("Ingresar nueva edad: "))
-    usuario["mail"] = input("Ingresar nuevo mail: ")
-    usuario["telefono"] = int(input("Ingresar nuevo telefono: "))
+
+    nombre = input("Ingresar nuevo nombre: ")
+    if volver_al_menu(nombre):
+        return
+    usuario["nombre"] = nombre
+
+    edad_input = input("Ingresar nueva edad: ")
+    if volver_al_menu(edad_input):
+        return
+    usuario["edad"] = int(edad_input)
+
+    mail = input("Ingresar nuevo mail: ")
+    if volver_al_menu(mail):
+        return
+    usuario["mail"] = mail
+
+    telefono_input = input("Ingresar nuevo telefono: ")
+    if volver_al_menu(telefono_input):
+        return
+    usuario["telefono"] = int(telefono_input)
 
     print("Usuario modificado correctamente")
