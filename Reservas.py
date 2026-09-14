@@ -8,6 +8,14 @@ reservas = [
     [1006, 4, 3653, "02/09/2026", "13:00", "13:30"],
 ]
 
+
+def volver_al_menu(valor):
+    if valor == "-1":
+        print("Volviendo al menu principal...")
+        return True
+    return False
+
+
 def imprimir_Reservas(matriz):
     '''
     pre: recibe una matriz de reservas, donde cada fila representa una reserva con sus datos
@@ -45,11 +53,27 @@ def realizar_Reserva(matriz):
 
     id_reserva = len(matriz) + 1000
 
-    id_sala     = int(input("Ingresar Id de sala: "))
-    id_usuario  = int(input("Ingresar Id de usuario: "))
-    fecha       = input ("Ingresar Fecha: ")
-    inicio      = input("Ingresar Horario de inicio: ")
-    fin         = input("Ingresar Horario de fin: ")
+    id_sala_input = input("Ingresar Id de sala o -1 para volver al menu principal: ")
+    if volver_al_menu(id_sala_input):
+        return
+    id_sala = int(id_sala_input)
+
+    id_usuario_input = input("Ingresar Id de usuario o -1 para volver al menu principal: ")
+    if volver_al_menu(id_usuario_input):
+        return
+    id_usuario = int(id_usuario_input)
+
+    fecha = input("Ingresar Fecha o -1 para volver al menu principal: ")
+    if volver_al_menu(fecha):
+        return
+
+    inicio = input("Ingresar Horario de inicio o -1 para volver al menu principal: ")
+    if volver_al_menu(inicio):
+        return
+
+    fin = input("Ingresar Horario de fin o -1 para volver al menu principal: ")
+    if volver_al_menu(fin):
+        return
 
     nuevaReserva = [id_reserva, id_sala, id_usuario, fecha, inicio, fin]
     matriz.append(nuevaReserva)
@@ -64,7 +88,11 @@ def eliminar_Reserva(matriz):
              la matriz original y muestra un mensaje de exito. si no existe, muestra un mensaje de error.
     '''
 
-    id = int(input("Ingresar Id: "))
+    id_input = input("Ingresar Id o -1 para volver al menu principal: ")
+    if volver_al_menu(id_input):
+        return
+    id = int(id_input)
+
     i = 0
     while i < len(matriz):
         if matriz [i][0] == id:
@@ -85,16 +113,40 @@ def modificar_Reserva(matriz):
     reserva_encontrada = False
 
     while not reserva_encontrada:
-        id_buscado = int(input("Ingresar id de la reserva a modificar: "))
+        id_buscado_input = input("Ingresar id de la reserva a modificar o -1 para volver al menu principal: ")
+        if volver_al_menu(id_buscado_input):
+            return
+        id_buscado = int(id_buscado_input)
 
         for fila in matriz:
             if fila[0] == id_buscado:
                 reserva_encontrada = True
-                fila[1] = input("Ingresar nuevo id de sala:: ")
-                fila[2] = int(input("Ingresar nuevo id de usuario: "))
-                fila[3] = input("Ingresar nueva fecha de reserva:  ")
-                fila[4] = input("Ingresar nuevo horario de inicio: ")
-                fila[5] = input("Ingresar nuevo horaio de fin: ")
+
+                nuevo_sala = input("Ingresar nuevo id de sala o -1 para volver al menu principal: ")
+                if volver_al_menu(nuevo_sala):
+                    return
+                fila[1] = nuevo_sala
+
+                nuevo_usuario_input = input("Ingresar nuevo id de usuario o -1 para volver al menu principal: ")
+                if volver_al_menu(nuevo_usuario_input):
+                    return
+                fila[2] = int(nuevo_usuario_input)
+
+                nueva_fecha = input("Ingresar nueva fecha de reserva o -1 para volver al menu principal: ")
+                if volver_al_menu(nueva_fecha):
+                    return
+                fila[3] = nueva_fecha
+
+                nuevo_inicio = input("Ingresar nuevo horario de inicio o -1 para volver al menu principal: ")
+                if volver_al_menu(nuevo_inicio):
+                    return
+                fila[4] = nuevo_inicio
+
+                nuevo_fin = input("Ingresar nuevo horario de fin o -1 para volver al menu principal: ")
+                if volver_al_menu(nuevo_fin):
+                    return
+                fila[5] = nuevo_fin
+
                 print("Reserva modificada correctamente")
 
         if not reserva_encontrada:

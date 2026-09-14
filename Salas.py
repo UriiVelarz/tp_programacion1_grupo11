@@ -110,10 +110,10 @@ def agregar_Sala(matriz):
          agrega una sala a la matriz al final de la lista y muestra un mensaje de exito.
     '''
 
-    id_sala     = int(input("Ingresar Id de sala: "))
-    nombre_sala = input("Ingresar nombre de sala: ")
-    ubicacion   = input ("Ingresar ubicacion: ")
-    capacidad   = input("Ingresar capacidad: ")
+    id_sala     = int(input("Ingresar Id de sala o -1 para volver al menu principal: "))
+    nombre_sala = input("Ingresar nombre de sala o -1 para volver al menu principal: ")
+    ubicacion   = input ("Ingresar ubicacion o -1 para volver al menu principal: ")
+    capacidad   = input("Ingresar capacidad o -1 para volver al menu principal: ")
 
     nuevaSala = [id_sala, nombre_sala, ubicacion, capacidad]
     matriz.append(nuevaSala)
@@ -127,7 +127,7 @@ def eliminar_Sala(matriz):
              la matriz original y muestra un mensaje de exito. si no existe, muestra un mensaje de error.
     '''
 
-    id = int(input("Ingresar Id: "))
+    id = int(input("Ingresar Id o -1 para volver al menu principal: "))
     i = 0
     while i < len(matriz):
         if matriz [i][0] == id:
@@ -148,14 +148,14 @@ def modificar_Sala(matriz):
     sala_encontrada = False
 
     while not sala_encontrada:
-        id_buscado = int(input("Ingresar id de la sala a modificar: "))
+        id_buscado = int(input("Ingresar id de la sala a modificar o -1 para volver al menu principal: "))
 
         for fila in matriz:
                     if fila[0] == id_buscado:
                         sala_encontrada = True
-                        fila[0] = int(input("Ingresar nuevo id de sala: "))
-                        fila[1] = input("Ingresar nuevo nombre de sala: ")
-                        fila[2] = input("Ingresar nueva ubicacion de la sala:  ")
+                        fila[0] = int(input("Ingresar nuevo id de sala o -1 para volver al menu principal: "))
+                        fila[1] = input("Ingresar nuevo nombre de sala o -1 para volver al menu principal: ")
+                        fila[2] = input("Ingresar nueva ubicacion de la sala o -1 para volver al menu principal:  ")
                         print("Sala modificada correctamente")
 
         if not sala_encontrada:
