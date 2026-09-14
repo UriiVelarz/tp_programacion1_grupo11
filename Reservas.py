@@ -15,7 +15,6 @@ def volver_al_menu(valor):
         return True
     return False
 
-
 def imprimir_Reservas(matriz):
     '''
     pre: recibe una matriz de reservas, donde cada fila representa una reserva con sus datos
