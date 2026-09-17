@@ -1,45 +1,38 @@
+
+# Columnas: [usuario, clave, rol]
 credenciales = [
     ["admin", "admin123", "administrador"],
     ["facundogozio", "facundo2026", "administrador"],
     ["tomasgallo", "tomas2026", "administrador"],
     ["agustintantardini", "agustin2026", "administrador"],
-    ["urielvelardez", "uriel2026", "administrador"],
+    ["urielvelardez", "uriel2026", "administrador"]
 ]
 MAX_INTENTOS = 3
 
 
 def buscar_usuario(nombre):
-    for i in credenciales:
-        if i[0].lower() == nombre:
-            return i
-    return None
+    """Devuelve la fila del usuario si existe, o None."""
+    encontrados = list(filter(lambda u: u[0] == nombre, credenciales))
+    return encontrados[0] if encontrados else None
 
 
 def clave_valida(clave):
-    letras = "abcdefghijklmnopqrstuvwxyz"
-    numeros = "0123456789"
-    tiene_letra = False
-    tiene_numero = False
+    """Minimo 6 caracteres, con al menos una letra y un numero."""
+    tiene_letra = tiene_numero = False
     for c in clave:
-        if c.lower() in letras:
+        if c.isalpha():
             tiene_letra = True
-        elif c in numeros:
+        elif c.isdigit():
             tiene_numero = True
     return len(clave) >= 6 and tiene_letra and tiene_numero
 
 
 def registrar_usuario():
-    nombre = input("Nuevo nombre de usuario o -1 para volver al menu principal: ").lower()
-    if nombre == "-1":
-        print("Volviendo al menu principal...")
-        return None
+    nombre = input("Nuevo nombre de usuario: ").strip().lower()
     if nombre == "" or buscar_usuario(nombre) is not None:
         print("Nombre vacio o ya registrado.")
         return None
-    clave = input("Clave (min. 6 caracteres, letras y numeros) o -1 para volver al menu principal: ")
-    if clave == "-1":
-        print("Volviendo al menu principal...")
-        return None
+    clave = input("Clave (minimo 6 caracteres, letras y numeros): ")
     if not clave_valida(clave):
         print("La clave no cumple los requisitos.")
         return None
@@ -52,14 +45,8 @@ def registrar_usuario():
 def iniciar_sesion():
     intentos = 0
     while intentos < MAX_INTENTOS:
-        nombre = input("Usuario o -1 para volver al menu principal: ").lower()
-        if nombre == "-1":
-            print("Volviendo al menu principal...")
-            return None
-        clave = input("Clave o -1 para volver al menu principal: ")
-        if clave == "-1":
-            print("Volviendo al menu principal...")
-            return None
+        nombre = input("Usuario: ").strip().lower()
+        clave = input("Clave: ")
         u = buscar_usuario(nombre)
         if u is not None and u[1] == clave:
             print("Bienvenido/a,", nombre, "(" + u[2] + ")")
@@ -73,9 +60,7 @@ def iniciar_sesion():
 def menu_login():
     while True:
         print("\n--- ACCESO AL SISTEMA ---")
-        print("1. Iniciar sesion")
-        print("2. Registrarse")
-        print("3. Salir")
+        print("1. Iniciar sesion\n2. Registrarse\n3. Salir")
         opcion = input("Opcion: ")
         if opcion == "1":
             u = iniciar_sesion()
