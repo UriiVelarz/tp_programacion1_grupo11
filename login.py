@@ -1,16 +1,15 @@
-usuarios = [
+credenciales = [
     ["admin", "admin123", "administrador"],
-    ["FacundoGozio", "Facundo2026", "cliente"],
-    ["TomasGallo", "Tomas2026", "cliente"],
-    ["AgustinT", "Agustin2026", "cliente"],
-    ["Uri_Velardez", "Uri2026", "cliente"],
-    ["Fauzi", "Fauzi2026", "cliente"]
+    ["facundogozio", "facundo2026", "administrador"],
+    ["tomasgallo", "tomas2026", "administrador"],
+    ["agustintantardini", "agustin2026", "administrador"],
+    ["urielvelardez", "uriel2026", "administrador"],
 ]
 MAX_INTENTOS = 3
 
 
 def buscar_usuario(nombre):
-    for i in usuarios:
+    for i in credenciales:
         if i[0].lower() == nombre:
             return i
     return None
@@ -45,7 +44,7 @@ def registrar_usuario():
         print("La clave no cumple los requisitos.")
         return None
     nuevo = [nombre, clave, "cliente"]
-    usuarios.append(nuevo)
+    credenciales.append(nuevo)
     print("Usuario", nombre, "registrado correctamente.")
     return nuevo
 
