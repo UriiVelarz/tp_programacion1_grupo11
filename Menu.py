@@ -1,8 +1,10 @@
 import Reservas
 import Usuarios
-import login
+import Login
+
 usuarios = Usuarios.usuarios
 reservas = Reservas.reservas
+
 
 
 def menu_principal():
@@ -34,4 +36,6 @@ def menu_principal():
 
 
 if __name__ == "__main__":
-    menu_principal()
+    sesion = Login.menu_login()
+    if sesion is not None:
+        menu_principal()
