@@ -1,74 +1,81 @@
 usuarios = [
-    ["admin", "admin123", "administrador"],
-    ["FacundoGozio", "Facundo2026", "cliente"],
-    ["TomasGallo", "Tomas2026", "cliente"],
-    ["AgustinT", "Agustin2026", "cliente"],
-    ["Uri_Velardez", "Uri2026", "cliente"],
-    ["Fauzi", "Fauzi2026", "cliente"]
+    ["Admin", "", "administrador"],
+    ["FacundoGozio", "", "cliente"],
+    ["TomasGallo", "", "cliente"],
+    ["AgustinT", "", "cliente"],
+    ["Uri_Velardez", "", "cliente"],
+    ["Fauzi", "", "cliente"]
 ]
 MAX_INTENTOS = 3
 
 
+def normalizar_usuario(nombre):
+    if nombre is None:
+        return ""
+    nombre = nombre.strip().replace("_", " ")
+    nombre = " ".join(nombre.split())
+    return nombre.title()
+
+
+def nombre_valido(nombre):
+    if nombre is None:
+        return False
+    nombre = normalizar_usuario(nombre)
+    if nombre == "":
+        return False
+    return nombre.isalpha()
+
+
+def usuario_existe(nombre):
+    nombre_normalizado = normalizar_usuario(nombre)
+    for usuario in usuarios:
+        if normalizar_usuario(usuario[0]) == nombre_normalizado:
+            return True
+    return False
+
+
 def buscar_usuario(nombre):
-    for i in usuarios:
-        if i[0].lower() == nombre:
-            return i
+    nombre_normalizado = normalizar_usuario(nombre)
+    for usuario in usuarios:
+        if normalizar_usuario(usuario[0]) == nombre_normalizado:
+            return usuario
     return None
-
-
-def clave_valida(clave):
-    letras = "abcdefghijklmnopqrstuvwxyz"
-    numeros = "0123456789"
-    tiene_letra = False
-    tiene_numero = False
-    for c in clave:
-        if c.lower() in letras:
-            tiene_letra = True
-        elif c in numeros:
-            tiene_numero = True
-    return len(clave) >= 6 and tiene_letra and tiene_numero
 
 
 def registrar_usuario():
-    nombre = input("Nuevo nombre de usuario o -1 para volver al menu principal: ").lower()
-    if nombre == "-1":
-        print("Volviendo al menu principal...")
-        return None
-    if nombre == "" or buscar_usuario(nombre) is not None:
-        print("Nombre vacio o ya registrado.")
-        return None
-    clave = input("Clave (min. 6 caracteres, letras y numeros) o -1 para volver al menu principal: ")
-    if clave == "-1":
-        print("Volviendo al menu principal...")
-        return None
-    if not clave_valida(clave):
-        print("La clave no cumple los requisitos.")
-        return None
-    nuevo = [nombre, clave, "cliente"]
-    usuarios.append(nuevo)
-    print("Usuario", nombre, "registrado correctamente.")
-    return nuevo
-
-
-def iniciar_sesion():
-    intentos = 0
-    while intentos < MAX_INTENTOS:
-        nombre = input("Usuario o -1 para volver al menu principal: ").lower()
+    while True:
+        nombre = input("Nuevo nombre de usuario o -1 para volver al menu principal: ").strip()
         if nombre == "-1":
             print("Volviendo al menu principal...")
             return None
-        clave = input("Clave o -1 para volver al menu principal: ")
-        if clave == "-1":
+
+        nombre = normalizar_usuario(nombre)
+        if not nombre_valido(nombre):
+            print("El nombre debe contener solo letras, sin numeros, espacios ni caracteres especiales. Ejemplo: Facundo.")
+            continue
+        if usuario_existe(nombre):
+            print("Nombre ya registrado. Intente otro.")
+            continue
+        nuevo = [nombre, "", "cliente"]
+        usuarios.append(nuevo)
+        print("Usuario", nombre, "registrado correctamente.")
+        return nuevo
+
+
+def iniciar_sesion():
+    while True:
+        nombre = input("Usuario o -1 para volver al menu principal: ").strip()
+        if nombre == "-1":
             print("Volviendo al menu principal...")
             return None
-        u = buscar_usuario(nombre)
-        if u is not None and u[1] == clave:
-            print("Bienvenido/a,", nombre, "(" + u[2] + ")")
-            return u
-        intentos += 1
-        print("Datos incorrectos. Intentos restantes:", MAX_INTENTOS - intentos)
-    print("Se supero la cantidad de intentos.")
-    return None
+
+        nombre = normalizar_usuario(nombre)
+        usuario = buscar_usuario(nombre)
+        if usuario is not None:
+            print("Bienvenido/a,", usuario[0], "(" + usuario[2] + ")")
+            return usuario
+
+        print("Usuario no encontrado. Intente nuevamente.")
 
 
 def menu_login():
@@ -87,7 +94,7 @@ def menu_login():
         elif opcion == "3":
             return None
         else:
-            print("Opcion invalida.")
+            print("Opcion invalida. Intente nuevamente.")
 
 
 if __name__ == "__main__":
