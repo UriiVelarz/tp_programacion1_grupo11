@@ -132,16 +132,16 @@ def realizar_Reserva(matriz, id_usuario=0):
         print(f"El dia debe estar entre 1 y {obtener_dias_del_mes(mes)} para ese mes.")
 
     while True:
-        hora_input = input("Ingresar hora de inicio (formato 24hs) o -1 para volver al menu principal: ").strip()
+        hora_input = input("Ingresar hora de inicio (entre 9 y 16, formato 24hs) o -1 para volver al menu principal: ").strip()
         if volver_al_menu(hora_input):
             return
         if hora_input.isdigit():
             hora = int(hora_input)
-            if 0 <= hora <= 23:
+            if 9 <= hora <= 16:
                 break
-        print("La hora debe estar entre 0 y 23.")
+        print("La hora debe estar entre 9 y 16 para reservar bloques de 2 horas.")
 
-    hora_fin = (hora + 2) % 24
+    hora_fin = hora + 2
     fecha = f"{dia:02d}/{mes:02d}/{anio}"
     inicio = f"{hora:02d}:00"
     fin = f"{hora_fin:02d}:00"

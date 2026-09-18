@@ -1,8 +1,3 @@
-# Sistema de disponibilidad de salas usando matriz
-# Fila = sala
-# Columna = día
-# Total de salas: 6 (2 pequeñas, 2 medianas, 2 grandes)
-
 import re
 
 from Reservas import reservas
@@ -95,20 +90,35 @@ def contar_reservas_por_tamanio(anio, mes, dia, tamaño):
     return cantidad, TIPOS_SALA[tamaño]["cantidad"]
 
 
-def estado_tamanio(anio, mes, dia, tamaño):
-    ocupadas, total = contar_reservas_por_tamanio(anio, mes, dia, tamaño)
-    nombre = TIPOS_SALA[tamaño]["nombre"]
-    if ocupadas == 0:
+def estado_horario(anio, mes, dia, tamaño, hora_inicio):
+    fecha = f"{dia:02d}/{mes:02d}/{anio}"
+    hora_fin = hora_inicio + 2
+    capacidad = TIPOS_SALA[tamaño]["cantidad"]
+    conflictos = 0
+
+    for reserva in reservas:
+        if reserva[1] != tamaño or reserva[3] != fecha:
+            continue
+
+        inicio = int(reserva[4][:2])
+        fin = int(reserva[5][:2])
+        bloque_actual = (hora_inicio, hora_fin)
+        bloque_reserva = (inicio, fin)
+
+        if not (bloque_actual[1] <= bloque_reserva[0] or bloque_actual[0] >= bloque_reserva[1]):
+            conflictos += 1
+
+    if conflictos == 0:
         color = COLOR_VERDE
-        estado = "Libre"
-    elif ocupadas < total:
+        estado = f"Libre {conflictos}/{capacidad}"
+    elif conflictos < capacidad:
         color = COLOR_AMARILLO
-        estado = "Parcial"
+        estado = f"Parcial {conflictos}/{capacidad}"
     else:
         color = COLOR_ROJO
-        estado = "Ocupada"
+        estado = f"Ocupada {conflictos}/{capacidad}"
 
-    return f"{color}{ocupadas}/{total} {estado}{COLOR_RESET}", nombre
+    return f"{color}{estado}{COLOR_RESET}"
 
 
 def consultar_disponibilidad_mensual():
@@ -133,23 +143,66 @@ def consultar_disponibilidad_mensual():
         print("El mes debe estar entre 1 y 12.")
 
     dias_del_mes = obtener_dias_mes(mes)
-    print(f"\nDisponibilidad mensual - {mes}/{anio}")
-    print("=" * 100)
-    print(f"{'Dia':<5} | {'Pequeña (2)':^18} | {'Mediana (2)':^18} | {'Grande (2)':^18}")
-    print("-" * 100)
 
-    for dia in range(1, dias_del_mes + 1):
-        peq_txt, _ = estado_tamanio(anio, mes, dia, 1)
-        med_txt, _ = estado_tamanio(anio, mes, dia, 2)
-        gra_txt, _ = estado_tamanio(anio, mes, dia, 3)
+    while True:
+        dia_inicio_input = input(f"Ingrese el dia de inicio (1 a {dias_del_mes}) o -1 para volver: ").strip()
+        if dia_inicio_input == "-1":
+            return
+        if dia_inicio_input.isdigit():
+            dia_inicio = int(dia_inicio_input)
+            if 1 <= dia_inicio <= dias_del_mes:
+                break
+        print(f"El dia debe estar entre 1 y {dias_del_mes}.")
 
-        peq = formatear_celda(peq_txt, 18)
-        med = formatear_celda(med_txt, 18)
-        gra = formatear_celda(gra_txt, 18)
-        print(f"{dia:<5} | {peq} | {med} | {gra}")
+    while True:
+        cantidad_dias_input = input("Ingrese la cantidad de dias a imprimir (maximo 30): ").strip()
+        if cantidad_dias_input.isdigit():
+            cantidad_dias = int(cantidad_dias_input)
+            if 1 <= cantidad_dias <= 30:
+                break
+        print("La cantidad de dias debe estar entre 1 y 30.")
 
-    print("-" * 100)
-    print(f"{COLOR_VERDE}Libre: 0/2{COLOR_RESET}   {COLOR_AMARILLO}Parcial: 1/2{COLOR_RESET}   {COLOR_ROJO}Ocupada: 2/2{COLOR_RESET}")
+    fechas = []
+    anio_actual = anio
+    mes_actual = mes
+    dia_actual = dia_inicio
+
+    for _ in range(cantidad_dias):
+        while dia_actual > obtener_dias_mes(mes_actual):
+            dia_actual = 1
+            mes_actual += 1
+            if mes_actual > 12:
+                mes_actual = 1
+                anio_actual += 1
+
+        fechas.append((anio_actual, mes_actual, dia_actual))
+        dia_actual += 1
+
+    print(f"\n{'Disponibilidad mensual - ' + str(mes) + '/' + str(anio):^120}")
+    print(f"{'Total de salas: 2 pequeñas, 2 medianas y 2 grandes':^120}")
+    print("=" * 120)
+
+    for anio_actual, mes_actual, dia_actual in fechas:
+        print(f"\n=== Dia {dia_actual:02d}/{mes_actual:02d}/{anio_actual} ===")
+        print(f"{'Horario':<15} | {'Pequeña':^10} | {'Mediana':^10} | {'Grande':^10}")
+        print("-" * 62)
+
+        for hora_inicio in range(9, 18):
+            hora_fin = hora_inicio + 2
+            if hora_fin > 18:
+                continue
+
+            horario = f"{hora_inicio:02d}:00-{hora_fin:02d}:00"
+            peq = estado_horario(anio_actual, mes_actual, dia_actual, 1, hora_inicio)
+            med = estado_horario(anio_actual, mes_actual, dia_actual, 2, hora_inicio)
+            gra = estado_horario(anio_actual, mes_actual, dia_actual, 3, hora_inicio)
+
+            print(f"{horario:^15} | {peq:^10} | {med:^10} | {gra:^10}")
+
+        print("-" * 62)
+
+    print(f"\n{COLOR_VERDE}Libre 0/2{COLOR_RESET}   {COLOR_AMARILLO}Parcial 1/2{COLOR_RESET}   {COLOR_ROJO}Ocupada 2/2{COLOR_RESET}")
+    print("Los horarios validos para reservar son desde 09:00 hasta 16:00, con reservas de 2 horas.")
 
 
 def imprimir_Salas(matriz):
