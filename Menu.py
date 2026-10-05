@@ -1,4 +1,6 @@
+import Estadisticas
 import Reservas
+import Salas
 import Usuarios
 
 usuarios = Usuarios.usuarios
@@ -13,6 +15,7 @@ def menu_principal():
         print("3. Realizar reserva")
         print("4. Ver reservas")
         print("5. cerrar sesion")
+        print("6. Reportes estadisticos")
         print("0. Salir")
         opcion = input()
 
@@ -24,6 +27,9 @@ def menu_principal():
 
         elif opcion == "4":
             Reservas.imprimir_Reservas(reservas)
+
+        elif opcion == "6":
+            Estadisticas.menu_estadisticas(reservas, Salas.salas, usuarios)
 
         elif opcion == "0":
             print("Saliendo del sistema")
