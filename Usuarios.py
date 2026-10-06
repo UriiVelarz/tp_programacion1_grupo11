@@ -1,3 +1,6 @@
+import Funciones
+
+
 usuarios = {
     1234: {"nombre": "Juan", "edad": 18, "mail": "juan@gmail.com", "telefono": 11553834},
     8254: {"nombre": "Agus", "edad": 12, "mail": "agus@gmail.com", "telefono": 11512294},
@@ -28,7 +31,7 @@ def imprimir_Usuarios(usuarios):
     print(f"{'Id':<10}{'Nombre':<12}{'Edad':<8}{'Mail':<25}{'Telefono':<12}")
     print("-" * 65)
 
-    for id_usuario, usuario in usuarios.items():
+    for id_usuario, usuario in Funciones.ordenar_usuarios_por_nombre(usuarios).items():
         mail = usuario['mail']
         if len(mail) > 20:
             mail = mail[:20] + "..."

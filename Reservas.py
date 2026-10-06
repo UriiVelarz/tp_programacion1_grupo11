@@ -1,3 +1,6 @@
+import Funciones
+
+
 reservas = [
     [1000, 1, 1234, "01/09/2026", "08:00", "10:00"],
     [1001, 2, 8254, "01/09/2026", "08:30", "10:30"],
@@ -17,11 +20,7 @@ def volver_al_menu(valor):
 
 
 def reservas_por_usuario(matriz, usuario):
-    usuario_id = str(usuario)
-    filtradas = []
-    for reserva in matriz:
-        if str(reserva[2]) == usuario_id:
-            filtradas.append(reserva)
+    filtradas = Funciones.filtrar_reservas_por_usuario(matriz, usuario)
     return [(indice, reserva) for indice, reserva in enumerate(filtradas, start=1)]
 
 
@@ -38,8 +37,10 @@ def imprimir_Reservas(matriz, usuario=None):
     print(f"{'Id':<12}{'Sala':<8}{'Usuario':<12}{'Fecha':<14}{'Inicio':<12}{'Fin':<12}")
     print("-" * 70)
 
+    reservas_ordenadas = Funciones.ordenar_reservas_por_fecha(matriz)
+
     if usuario is not None:
-        lista = reservas_por_usuario(matriz, usuario)
+        lista = reservas_por_usuario(reservas_ordenadas, usuario)
         if not lista:
             print("No hay reservas para este usuario.")
             return
@@ -48,7 +49,7 @@ def imprimir_Reservas(matriz, usuario=None):
             print(f"{id_local:<12}{sala:<8}{id_usuario:<12}{fecha:<14}{inicio:<12}{fin:<12}")
         return
 
-    for reserva in matriz:
+    for reserva in reservas_ordenadas:
         _, sala, id_usuario, fecha, inicio, fin = reserva
         print(f"{_:<12}{sala:<8}{id_usuario:<12}{fecha:<14}{inicio:<12}{fin:<12}")
 
@@ -150,10 +151,7 @@ def realizar_Reserva(matriz, id_usuario=0):
         print("No puedes reservar en un dia y horario que ya habias reservado antes.")
         return
 
-    contador = 1
-    for reserva in matriz:
-        if str(reserva[2]) == str(id_usuario):
-            contador += 1
+    contador = Funciones.contar_reservas_por_usuario(matriz, id_usuario) + 1
 
     nuevaReserva = [contador, id_sala, id_usuario, fecha, inicio, fin]
     matriz.append(nuevaReserva)
