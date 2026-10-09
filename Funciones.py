@@ -1,26 +1,47 @@
-from Usuarios import usuarios
-from Reservas import reservas
-
-#Funciones de usuarios
-
-#Funciones para ordenar
-ordenado_Id     = sorted(usuarios, key=lambda fila: fila[0])
-ordenado_Nombre = sorted(usuarios, key=lambda fila: fila[1])       
-ordenado_Edad   = sorted(usuarios, key=lambda fila: fila[2])
-
-#Funciones para filtrar
-mayores = list(filter(lambda usuarios: usuarios[2] >= 18, usuarios))
+from functools import reduce
 
 
-#Funciones de reservas
+def ordenar_usuarios_por_nombre(usuarios):
+    """Devuelve los usuarios ordenados alfabeticamente por nombre."""
+    return dict(sorted(
+        usuarios.items(),
+        key=lambda elemento: elemento[1]["nombre"].casefold()
+    ))
 
-#Funciones para ordenar
-ordenFechaYHorario = sorted(reservas, key=lambda fila: (fila[3],fila[4]))
 
-#Funciones para filtrar
-id_usuario_buscado = 3653
-filtrarPorId = list(filter(lambda reserva: reserva[2] == id_usuario_buscado, reservas))
+def filtrar_usuarios_mayores(usuarios):
+    """Devuelve los usuarios que tienen 18 anos o mas."""
+    return dict(filter(
+        lambda elemento: elemento[1]["edad"] >= 18,
+        usuarios.items()
+    ))
 
-#Funciones 
-ids_Reservas = list(map(lambda fila: fila[0], reservas))
 
+def filtrar_reservas_por_usuario(reservas, id_usuario):
+    """Devuelve las reservas pertenecientes al usuario indicado."""
+    return list(filter(
+        lambda reserva: str(reserva[2]) == str(id_usuario),
+        reservas
+    ))
+
+
+def ordenar_reservas_por_fecha(reservas):
+    """Ordena las reservas por fecha y hora de inicio."""
+    return sorted(
+        reservas,
+        key=lambda reserva: (
+            reserva[3][6:10],
+            reserva[3][3:5],
+            reserva[3][:2],
+            reserva[4]
+        )
+    )
+
+
+def contar_reservas_por_usuario(reservas, id_usuario):
+    """Cuenta las reservas del usuario usando reduce y una lambda."""
+    return reduce(
+        lambda total, reserva: total + (str(reserva[2]) == str(id_usuario)),
+        reservas,
+        0
+    )
