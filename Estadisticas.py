@@ -1,15 +1,11 @@
 from functools import reduce
 
+import Reservas
 import Salas
 import Usuarios
-from Reservas import reservas as reservas_sistema
 
 
 def fecha_a_clave(fecha):
-    '''
-    pre: recibe una fecha en formato dd/mm/aaaa.
-    pos: devuelve una cadena aaaammdd para poder comparar fechas.
-    '''
     partes = fecha.split("/")
     if len(partes) != 3:
         return fecha
@@ -17,227 +13,258 @@ def fecha_a_clave(fecha):
     return anio + mes + dia
 
 
-def filtrar_por_periodo(reservas, fecha_desde=None, fecha_hasta=None):
-    '''
-    pre: recibe la matriz de reservas y, de forma opcional, dos fechas dd/mm/aaaa.
-    pos: devuelve las reservas cuyo dia esta dentro del periodo indicado.
-    '''
-    if fecha_desde is None and fecha_hasta is None:
-        return list(reservas)
+def validar_fecha(texto):
+    partes = texto.split("/")
+    if len(partes) != 3:
+        return None
+    if not (partes[0].isdigit() and partes[1].isdigit() and partes[2].isdigit()):
+        return None
 
-    desde = fecha_a_clave(fecha_desde) if fecha_desde else None
-    hasta = fecha_a_clave(fecha_hasta) if fecha_hasta else None
+    dia = int(partes[0])
+    mes = int(partes[1])
+    anio = int(partes[2])
+
+    if anio != 2026 and anio != 2027:
+        return None
+    if mes < 1 or mes > 12:
+        return None
+    if dia < 1 or dia > Reservas.obtener_dias_del_mes(mes):
+        return None
+
+    return f"{dia:02d}/{mes:02d}/{anio}"
+
+
+def filtrar_por_periodo(reservas, fecha_desde=None, fecha_hasta=None):
+    desde = "00000000"
+    hasta = "99999999"
+    if fecha_desde is not None:
+        desde = fecha_a_clave(fecha_desde)
+    if fecha_hasta is not None:
+        hasta = fecha_a_clave(fecha_hasta)
 
     return list(filter(
-        lambda reserva: (
-            (desde is None or fecha_a_clave(reserva[3]) >= desde)
-            and (hasta is None or fecha_a_clave(reserva[3]) <= hasta)
-        ),
+        lambda reserva: desde <= fecha_a_clave(reserva[3]) <= hasta,
         reservas
     ))
 
 
 def total_reservas(reservas):
-    '''
-    pre: recibe la matriz de reservas.
-    pos: devuelve la cantidad total de reservas usando reduce.
-    '''
-    return reduce(lambda acumulado, _reserva: acumulado + 1, reservas, 0)
+    return reduce(lambda acumulado, reserva: acumulado + 1, reservas, 0)
 
 
-def reservas_por_sala(reservas):
-    '''
-    pre: recibe la matriz de reservas.
-    pos: devuelve un diccionario {id_sala: cantidad} con el conteo por sala.
-    '''
-    return reduce(
-        lambda acumulado, reserva: {
-            **acumulado,
-            reserva[1]: acumulado.get(reserva[1], 0) + 1
-        },
-        reservas,
-        {}
-    )
+def reservas_por_tipo_sala(reservas):
+    conteo = {}
+    for reserva in reservas:
+        tipo = reserva[1]
+        conteo[tipo] = conteo.get(tipo, 0) + 1
+    return conteo
 
 
 def reservas_por_usuario(reservas):
-    '''
-    pre: recibe la matriz de reservas.
-    pos: devuelve un diccionario {id_usuario: cantidad} con el conteo por usuario.
-    '''
-    return reduce(
-        lambda acumulado, reserva: {
-            **acumulado,
-            reserva[2]: acumulado.get(reserva[2], 0) + 1
-        },
-        reservas,
-        {}
-    )
+    conteo = {}
+    for reserva in reservas:
+        id_usuario = str(reserva[2])
+        conteo[id_usuario] = conteo.get(id_usuario, 0) + 1
+    return conteo
+
+
+def dias_con_reservas(reservas):
+    fechas = []
+    for reserva in reservas:
+        if reserva[3] not in fechas:
+            fechas.append(reserva[3])
+    return fechas
 
 
 def promedio_diario(reservas):
-    '''
-    pre: recibe la matriz de reservas.
-    pos: devuelve el promedio de reservas por dia distinto. si no hay reservas, devuelve 0.
-    '''
-    total = total_reservas(reservas)
-    fechas = set(map(lambda reserva: reserva[3], reservas))
+    fechas = dias_con_reservas(reservas)
     if len(fechas) == 0:
         return 0
-    return total / len(fechas)
+    return total_reservas(reservas) / len(fechas)
 
 
 def promedio_por_sala(reservas, salas):
-    '''
-    pre: recibe la matriz de reservas y la matriz de salas.
-    pos: devuelve el promedio de reservas por sala (incluye salas sin reservas).
-    '''
     cantidad_salas = len(salas)
     if cantidad_salas == 0:
         return 0
     return total_reservas(reservas) / cantidad_salas
 
 
-def porcentaje_por_sala(reservas, salas):
-    '''
-    pre: recibe la matriz de reservas y la matriz de salas.
-    pos: devuelve un diccionario {id_sala: porcentaje} sobre el total de reservas.
-    '''
+def porcentaje_por_tipo_sala(reservas):
     total = total_reservas(reservas)
-    conteo = reservas_por_sala(reservas)
+    conteo = reservas_por_tipo_sala(reservas)
     porcentajes = {}
 
-    for sala in salas:
-        id_sala = sala[0]
-        cantidad = conteo.get(id_sala, 0)
+    for tipo in Salas.TIPOS_SALA:
         if total == 0:
-            porcentajes[id_sala] = 0
+            porcentajes[tipo] = 0
         else:
-            porcentajes[id_sala] = (cantidad / total) * 100
+            porcentajes[tipo] = (conteo.get(tipo, 0) / total) * 100
 
     return porcentajes
 
 
 def extremos_por_categoria(conteo):
-    '''
-    pre: recibe un diccionario {categoria: cantidad}.
-    pos: devuelve una tupla (clave_max, valor_max, clave_min, valor_min).
-         si el diccionario esta vacio, devuelve (None, 0, None, 0).
-    '''
-    if not conteo:
-        return (None, 0, None, 0)
+    if len(conteo) == 0:
+        return ([], 0, [], 0)
 
-    id_max, maximo = max(conteo.items(), key=lambda par: par[1])
-    id_min, minimo = min(conteo.items(), key=lambda par: par[1])
-    return (id_max, maximo, id_min, minimo)
+    maximo = None
+    minimo = None
+    for cantidad in conteo.values():
+        if maximo is None or cantidad > maximo:
+            maximo = cantidad
+        if minimo is None or cantidad < minimo:
+            minimo = cantidad
+
+    claves_max = []
+    claves_min = []
+    for clave, cantidad in conteo.items():
+        if cantidad == maximo:
+            claves_max.append(clave)
+        if cantidad == minimo:
+            claves_min.append(clave)
+
+    return (claves_max, maximo, claves_min, minimo)
 
 
-def nombre_sala(salas, id_sala):
-    for sala in salas:
-        if sala[0] == id_sala:
-            return sala[1]
-    return f"Sala {id_sala}"
+def nombre_tipo_sala(tipo):
+    if tipo in Salas.TIPOS_SALA:
+        return Salas.TIPOS_SALA[tipo]["nombre"]
+    return f"Tipo {tipo}"
 
 
 def nombre_usuario(usuarios, id_usuario):
-    if id_usuario in usuarios:
-        return usuarios[id_usuario]["nombre"]
-    return f"Usuario {id_usuario}"
+    if str(id_usuario).isdigit() and int(id_usuario) in usuarios:
+        return f"{usuarios[int(id_usuario)]['nombre']} (id {id_usuario})"
+    return str(id_usuario)
+
+
+def unir_tipos(lista_tipos):
+    nombres = []
+    for tipo in lista_tipos:
+        nombres.append(nombre_tipo_sala(tipo))
+    return ", ".join(nombres)
+
+
+def unir_usuarios(usuarios, lista_ids):
+    nombres = []
+    for id_usuario in lista_ids:
+        nombres.append(nombre_usuario(usuarios, id_usuario))
+    return ", ".join(nombres)
 
 
 def mostrar_resumen(reservas, salas, usuarios, fecha_desde=None, fecha_hasta=None):
-    '''
-    pre: recibe reservas, salas y usuarios. puede recibir un periodo de fechas.
-    pos: imprime el reporte estadistico (totales, promedios, porcentajes, maximos y minimos).
-    '''
     filtradas = filtrar_por_periodo(reservas, fecha_desde, fecha_hasta)
     total = total_reservas(filtradas)
-    fechas = set(map(lambda reserva: reserva[3], filtradas))
-    conteo_salas = reservas_por_sala(filtradas)
-    conteo_usuarios = reservas_por_usuario(filtradas)
-    porcentajes = porcentaje_por_sala(filtradas, salas)
-    conteo_salas_completo = {sala[0]: conteo_salas.get(sala[0], 0) for sala in salas}
-    conteo_usuarios_completo = {uid: conteo_usuarios.get(uid, 0) for uid in usuarios}
-    sala_max, cant_max, sala_min, cant_min = extremos_por_categoria(conteo_salas_completo)
-    user_max, user_cant_max, user_min, user_cant_min = extremos_por_categoria(conteo_usuarios_completo)
 
     print("\n" + "=" * 70)
     print(f"{'Reportes estadisticos':^70}")
     print("=" * 70)
 
-    if fecha_desde or fecha_hasta:
-        desde_txt = fecha_desde if fecha_desde else "inicio"
-        hasta_txt = fecha_hasta if fecha_hasta else "fin"
-        print(f"Periodo: {desde_txt} a {hasta_txt}")
-    else:
+    if fecha_desde is None and fecha_hasta is None:
         print("Periodo: todas las reservas cargadas")
+    else:
+        desde_txt = "inicio"
+        hasta_txt = "fin"
+        if fecha_desde is not None:
+            desde_txt = fecha_desde
+        if fecha_hasta is not None:
+            hasta_txt = fecha_hasta
+        print(f"Periodo: {desde_txt} a {hasta_txt}")
+
+    if total == 0:
+        print("No hay reservas en el periodo indicado.")
+        print("=" * 70)
+        return
+
+    conteo_tipos = reservas_por_tipo_sala(filtradas)
+    conteo_usuarios = reservas_por_usuario(filtradas)
+    porcentajes = porcentaje_por_tipo_sala(filtradas)
+
+    conteo_tipos_completo = {}
+    for tipo in Salas.TIPOS_SALA:
+        conteo_tipos_completo[tipo] = conteo_tipos.get(tipo, 0)
+
+    tipo_max, cant_max, tipo_min, cant_min = extremos_por_categoria(conteo_tipos_completo)
+    user_max, user_cant_max, user_min, user_cant_min = extremos_por_categoria(conteo_usuarios)
 
     print(f"Total de reservas: {total}")
-    print(f"Dias con reservas: {len(fechas)}")
+    print(f"Dias con reservas: {len(dias_con_reservas(filtradas))}")
     print(f"Promedio diario de reservas: {promedio_diario(filtradas):.2f}")
-    print(f"Promedio de reservas por sala: {promedio_por_sala(filtradas, salas):.2f}")
+    print(f"Promedio de reservas por sala ({len(salas)} salas): {promedio_por_sala(filtradas, salas):.2f}")
 
     print("-" * 70)
-    print(f"{'Id':<8}{'Sala':<16}{'Reservas':<12}{'% ocupacion':<14}")
+    print(f"{'Tipo de sala':<18}{'Salas':<10}{'Reservas':<12}{'% del total':<14}")
     print("-" * 70)
 
-    for sala in salas:
-        id_sala = sala[0]
-        cantidad = conteo_salas.get(id_sala, 0)
-        porcentaje = porcentajes.get(id_sala, 0)
-        print(f"{id_sala:<8}{nombre_sala(salas, id_sala):<16}{cantidad:<12}{porcentaje:>6.2f}%")
+    for tipo, datos in Salas.TIPOS_SALA.items():
+        cantidad = conteo_tipos.get(tipo, 0)
+        porcentaje = porcentajes[tipo]
+        print(f"{datos['nombre']:<18}{datos['cantidad']:<10}{cantidad:<12}{porcentaje:>6.2f}%")
 
     print("-" * 70)
+    print(f"Tipo de sala con mas reservas: {unir_tipos(tipo_max)} -> {cant_max}")
+    print(f"Tipo de sala con menos reservas: {unir_tipos(tipo_min)} -> {cant_min}")
 
-    if sala_max is not None:
-        print(
-            f"Sala con mas reservas: {nombre_sala(salas, sala_max)} "
-            f"(id {sala_max}) -> {cant_max}"
-        )
-        print(
-            f"Sala con menos reservas: {nombre_sala(salas, sala_min)} "
-            f"(id {sala_min}) -> {cant_min}"
-        )
+    print("-" * 70)
+    print(f"{'Usuario':<40}{'Reservas':<12}")
+    print("-" * 70)
 
-    if user_max is not None:
-        print(
-            f"Usuario con mas reservas: {nombre_usuario(usuarios, user_max)} "
-            f"(id {user_max}) -> {user_cant_max}"
-        )
-        print(
-            f"Usuario con menos reservas: {nombre_usuario(usuarios, user_min)} "
-            f"(id {user_min}) -> {user_cant_min}"
-        )
+    ranking = sorted(conteo_usuarios.items(), key=lambda par: par[1], reverse=True)
+    for id_usuario, cantidad in ranking:
+        print(f"{nombre_usuario(usuarios, id_usuario):<40}{cantidad:<12}")
+
+    print("-" * 70)
+    print(f"Usuario con mas reservas: {unir_usuarios(usuarios, user_max)} -> {user_cant_max}")
+    print(f"Usuario con menos reservas: {unir_usuarios(usuarios, user_min)} -> {user_cant_min}")
+    print("(Se consideran solo los usuarios que tienen al menos una reserva en el periodo.)")
 
     print("=" * 70)
 
 
+def pedir_fecha(mensaje):
+    while True:
+        texto = input(mensaje).strip()
+        if texto == "-1":
+            return "-1"
+        if texto == "":
+            return ""
+        fecha = validar_fecha(texto)
+        if fecha is not None:
+            return fecha
+        print("Fecha invalida. Usa el formato dd/mm/aaaa con año 2026 o 2027 (ej. 15/09/2026).")
+
+
 def pedir_periodo():
-    print("Dejar vacio para no limitar ese extremo. -1 cancela el reporte.")
-    fecha_desde = input("Fecha desde (dd/mm/aaaa): ").strip()
-    if fecha_desde == "-1":
-        print("Volviendo al menu...")
-        return None
-    if fecha_desde == "":
-        fecha_desde = None
+    while True:
+        print("Dejar vacio para no limitar ese extremo. -1 para volver al menu de reportes.")
 
-    fecha_hasta = input("Fecha hasta (dd/mm/aaaa): ").strip()
-    if fecha_hasta == "-1":
-        print("Volviendo al menu...")
-        return None
-    if fecha_hasta == "":
-        fecha_hasta = None
+        fecha_desde = pedir_fecha("Fecha desde (dd/mm/aaaa): ")
+        if fecha_desde == "-1":
+            print("Volviendo al menu de reportes...")
+            return None
 
-    return (fecha_desde, fecha_hasta)
+        fecha_hasta = pedir_fecha("Fecha hasta (dd/mm/aaaa): ")
+        if fecha_hasta == "-1":
+            print("Volviendo al menu de reportes...")
+            return None
+
+        if fecha_desde != "" and fecha_hasta != "":
+            if fecha_a_clave(fecha_desde) > fecha_a_clave(fecha_hasta):
+                print("La fecha desde no puede ser posterior a la fecha hasta.")
+                continue
+
+        if fecha_desde == "":
+            fecha_desde = None
+        if fecha_hasta == "":
+            fecha_hasta = None
+
+        return (fecha_desde, fecha_hasta)
 
 
 def menu_estadisticas(reservas=None, salas=None, usuarios=None):
-    '''
-    pre: recibe opcionalmente las estructuras del sistema.
-    pos: muestra un submenu de reportes hasta que el usuario vuelva atras.
-    '''
     if reservas is None:
-        reservas = reservas_sistema
+        reservas = Reservas.reservas
     if salas is None:
         salas = Salas.salas
     if usuarios is None:
@@ -247,17 +274,24 @@ def menu_estadisticas(reservas=None, salas=None, usuarios=None):
         print("\n=== Reportes estadisticos ===")
         print("1. Resumen general")
         print("2. Resumen por periodo")
-        print("0. Volver")
-        opcion = input("Opcion: ").strip()
+        print("3. Volver")
+        opcion = input("Seleccione una opcion: ").strip()
 
         if opcion == "1":
             mostrar_resumen(reservas, salas, usuarios)
+
         elif opcion == "2":
             periodo = pedir_periodo()
             if periodo is not None:
                 fecha_desde, fecha_hasta = periodo
                 mostrar_resumen(reservas, salas, usuarios, fecha_desde, fecha_hasta)
-        elif opcion == "0":
+
+        elif opcion == "3":
             return
+
         else:
             print("Opcion invalida, intenta otra vez.")
+
+
+if __name__ == "__main__":
+    menu_estadisticas()
