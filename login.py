@@ -81,5 +81,3 @@ def iniciar_sesion():
 
 
 
-if __name__ == "__main__":
-    print("Sesion activa:", menu_login())
