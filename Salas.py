@@ -30,6 +30,24 @@ def limpiar_ansi(texto):
     return re.sub(r"\x1b\[[0-9;]*m", "", texto)
 
 
+def validar_id_sala(texto):
+    return re.fullmatch(r"[1-9]\d*", texto) is not None
+
+
+def validar_nombre_sala(texto):
+    patron = r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9]+(?:[ -]+[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9]+)*"
+    return re.fullmatch(patron, texto.strip()) is not None
+
+
+def validar_ubicacion(texto):
+    patron = r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9]+(?:[ -]+[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9]+)*"
+    return re.fullmatch(patron, texto.strip()) is not None
+
+
+def validar_capacidad(texto):
+    return re.fullmatch(r"[1-9]\d*", texto) is not None
+
+
 def formatear_celda(texto, ancho):
     texto_limpio = limpiar_ansi(texto)
     espacios = max(0, ancho - len(texto_limpio))
@@ -232,10 +250,43 @@ def agregar_Sala(matriz):
     pos: solicita los datos para registrar una nueva sala. si el id ya existe, muestra error y finaliza. si el id es unico, 
          agrega una sala a la matriz al final de la lista y muestra un mensaje de exito.
     '''
-    id_sala = int(input("Ingresar Id de sala o -1 para volver al menu principal: "))
-    nombre_sala = input("Ingresar nombre de sala o -1 para volver al menu principal: ")
-    ubicacion = input("Ingresar ubicacion o -1 para volver al menu principal: ")
-    capacidad = input("Ingresar capacidad o -1 para volver al menu principal: ")
+    while True:
+        id_input = input("Ingresar Id de sala o -1 para volver al menu principal: ").strip()
+        if id_input == "-1":
+            return
+        if not validar_id_sala(id_input):
+            print("El Id debe ser un numero entero positivo.")
+            continue
+        id_sala = int(id_input)
+        if any(sala[0] == id_sala for sala in matriz):
+            print("Ese Id de sala ya existe.")
+            continue
+        break
+
+    while True:
+        nombre_sala = input("Ingresar nombre de sala o -1 para volver al menu principal: ").strip()
+        if nombre_sala == "-1":
+            return
+        if validar_nombre_sala(nombre_sala):
+            break
+        print("El nombre solo puede contener letras, numeros, espacios y guiones.")
+
+    while True:
+        ubicacion = input("Ingresar ubicacion o -1 para volver al menu principal: ").strip()
+        if ubicacion == "-1":
+            return
+        if validar_ubicacion(ubicacion):
+            break
+        print("La ubicacion solo puede contener letras, numeros, espacios y guiones.")
+
+    while True:
+        capacidad_input = input("Ingresar capacidad o -1 para volver al menu principal: ").strip()
+        if capacidad_input == "-1":
+            return
+        if validar_capacidad(capacidad_input):
+            capacidad = int(capacidad_input)
+            break
+        print("La capacidad debe ser un numero entero positivo.")
 
     nuevaSala = [id_sala, nombre_sala, ubicacion, capacidad]
     matriz.append(nuevaSala)
@@ -249,15 +300,21 @@ def eliminar_Sala(matriz):
         pos: solicita un id de sala por consola. si el id existe en la matriz, elimina la sala de 
              la matriz original y muestra un mensaje de exito. si no existe, muestra un mensaje de error.
     '''
-    id = int(input("Ingresar Id o -1 para volver al menu principal: "))
-    i = 0
-    while i < len(matriz):
-        if matriz[i][0] == id:
-            matriz.remove(matriz[i])
-            print("Sala eliminado correctamente")
+    while True:
+        id_input = input("Ingresar Id o -1 para volver al menu principal: ").strip()
+        if id_input == "-1":
             return
-        i = i + 1
-    print("No se encontro el id de Sala")
+        if not validar_id_sala(id_input):
+            print("El Id debe ser un numero entero positivo.")
+            continue
+        id_sala = int(id_input)
+        for sala in matriz:
+            if sala[0] == id_sala:
+                matriz.remove(sala)
+                print("Sala eliminado correctamente")
+                return
+        print("No se encontro el id de Sala")
+        return
 
 
 def modificar_Sala(matriz):
@@ -268,18 +325,51 @@ def modificar_Sala(matriz):
              (sala, usuario, fecha, inicio y fin) para sobreescribir los valores originales en la matriz.
              si el id no existe, la funcion termina sin realizar cambios.
     '''
-    sala_encontrada = False
+    while True:
+        id_buscado_input = input("Ingresar id de la sala a modificar o -1 para volver al menu principal: ").strip()
+        if id_buscado_input == "-1":
+            return
+        if not validar_id_sala(id_buscado_input):
+            print("El Id debe ser un numero entero positivo.")
+            continue
+        fila_encontrada = next(
+            (fila for fila in matriz if fila[0] == int(id_buscado_input)),
+            None
+        )
+        if fila_encontrada is not None:
+            break
+        print("Sala no encontrada. Intente nuevamente.")
 
-    while not sala_encontrada:
-        id_buscado = int(input("Ingresar id de la sala a modificar o -1 para volver al menu principal: "))
+    while True:
+        nuevo_id_input = input("Ingresar nuevo id de sala o -1 para volver al menu principal: ").strip()
+        if nuevo_id_input == "-1":
+            return
+        if not validar_id_sala(nuevo_id_input):
+            print("El Id debe ser un numero entero positivo.")
+            continue
+        nuevo_id = int(nuevo_id_input)
+        if any(fila is not fila_encontrada and fila[0] == nuevo_id for fila in matriz):
+            print("Ese Id de sala ya existe.")
+            continue
+        break
 
-        for fila in matriz:
-            if fila[0] == id_buscado:
-                sala_encontrada = True
-                fila[0] = int(input("Ingresar nuevo id de sala o -1 para volver al menu principal: "))
-                fila[1] = input("Ingresar nuevo nombre de sala o -1 para volver al menu principal: ")
-                fila[2] = input("Ingresar nueva ubicacion de la sala o -1 para volver al menu principal:  ")
-                print("Sala modificada correctamente")
+    while True:
+        nuevo_nombre = input("Ingresar nuevo nombre de sala o -1 para volver al menu principal: ").strip()
+        if nuevo_nombre == "-1":
+            return
+        if validar_nombre_sala(nuevo_nombre):
+            break
+        print("El nombre solo puede contener letras, numeros, espacios y guiones.")
 
-        if not sala_encontrada:
-            print("Sala no encontrada. Intente nuevamente.")
+    while True:
+        nueva_ubicacion = input("Ingresar nueva ubicacion de la sala o -1 para volver al menu principal: ").strip()
+        if nueva_ubicacion == "-1":
+            return
+        if validar_ubicacion(nueva_ubicacion):
+            break
+        print("La ubicacion solo puede contener letras, numeros, espacios y guiones.")
+
+    fila_encontrada[0] = nuevo_id
+    fila_encontrada[1] = nuevo_nombre
+    fila_encontrada[2] = nueva_ubicacion
+    print("Sala modificada correctamente")

@@ -6,43 +6,31 @@ import Estadisticas
 
 def menu_usuario_logueado(usuario):
     while True:
-        print(f"\n=== Bienvenido/a {usuario[0]} ===")
+        print(f"\n=== Bienvenido/a {usuario['nombre']} (ID {usuario['id']}) ===")
         print("1. Reservar sala")
         print("2. Mostrar reservas")
         print("3. Modificar reserva")
         print("4. Cancelar reserva")
         print("5. Consultar disponibilidad por mes")
-        print("6. Gestionar Salas")
-        print("7. Gestionar Usuarios")
-        print("8. Reportes estadisticos")
-        print("9. Cerrar sesion")
+        print("6. Cerrar sesion")
         opcion = input("Seleccione una opcion: ").strip()
 
         if opcion == "1":
-            Reservas.realizar_Reserva(Reservas.reservas, id_usuario=usuario[0])
+            Reservas.realizar_Reserva(Reservas.reservas, id_usuario=usuario["id"])
 
         elif opcion == "2":
-            Reservas.imprimir_Reservas(Reservas.reservas, usuario=usuario[0])
+            Reservas.imprimir_Reservas(Reservas.reservas, usuario=usuario["id"])
 
         elif opcion == "3":
-            Reservas.modificar_Reserva(Reservas.reservas, usuario=usuario[0])
+            Reservas.modificar_Reserva(Reservas.reservas, usuario=usuario["id"])
 
         elif opcion == "4":
-            Reservas.eliminar_Reserva(Reservas.reservas, usuario=usuario[0])
+            Reservas.eliminar_Reserva(Reservas.reservas, usuario=usuario["id"])
 
         elif opcion == "5":
             Salas.consultar_disponibilidad_mensual()
 
         elif opcion == "6":
-            menu_salas(Salas.salas)     
-        
-        elif opcion == "7":
-            menu_usuarios(Usuarios.usuarios)
-        
-        elif opcion == "8":
-            Estadisticas.menu_estadisticas(Reservas.reservas, Salas.salas, Usuarios.usuarios)
-
-        elif opcion == "9":
             print("Sesion cerrada.")
             return
 
@@ -56,7 +44,10 @@ def menu_principal():
         print("1. Registrar usuario")
         print("2. Iniciar sesion")
         print("3. Consultar disponibilidad por mes")
-        print("4. Salir del sistema")
+        print("4. Gestionar Salas")
+        print("5. Gestionar Usuarios")
+        print("6. Reportes estadisticos")
+        print("7. Salir del sistema")
         opcion = input("Seleccione una opcion: ").strip()
 
         if opcion == "1":
@@ -71,6 +62,15 @@ def menu_principal():
             Salas.consultar_disponibilidad_mensual()
 
         elif opcion == "4":
+            menu_salas(Salas.salas)
+
+        elif opcion == "5":
+            menu_usuarios(Usuarios.usuarios)
+
+        elif opcion == "6":
+            Estadisticas.menu_estadisticas(Reservas.reservas, Salas.salas, Usuarios.usuarios)
+
+        elif opcion == "7":
             print("Saliendo del sistema...")
             break
 

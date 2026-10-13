@@ -35,7 +35,8 @@ def imprimir_Usuarios(usuarios):
         mail = usuario['mail']
         if len(mail) > 20:
             mail = mail[:20] + "..."
-        print(f"{id_usuario:<10}{usuario['nombre']:<12}{usuario['edad']:<8}{mail:<25}{usuario['telefono']:<12}")
+        id_formateado = f"{int(id_usuario):05d}"
+        print(f"{id_formateado:<10}{usuario['nombre']:<12}{usuario['edad']:<8}{mail:<25}{usuario['telefono']:<12}")
 
 
 def registrar_Usuario(usuarios):
