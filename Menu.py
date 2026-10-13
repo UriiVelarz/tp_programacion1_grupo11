@@ -2,6 +2,7 @@ import login
 import Reservas
 import Salas
 import Usuarios
+import Estadisticas
 
 def menu_usuario_logueado(usuario):
     while True:
@@ -13,7 +14,8 @@ def menu_usuario_logueado(usuario):
         print("5. Consultar disponibilidad por mes")
         print("6. Gestionar Salas")
         print("7. Gestionar Usuarios")
-        print("8. Cerrar sesion")
+        print("8. Reportes estadisticos")
+        print("9. Cerrar sesion")
         opcion = input("Seleccione una opcion: ").strip()
 
         if opcion == "1":
@@ -38,6 +40,9 @@ def menu_usuario_logueado(usuario):
             menu_usuarios(Usuarios.usuarios)
         
         elif opcion == "8":
+            Estadisticas.menu_estadisticas(Reservas.reservas, Salas.salas, Usuarios.usuarios)
+
+        elif opcion == "9":
             print("Sesion cerrada.")
             return
 
@@ -119,7 +124,7 @@ def menu_usuarios(matriz):
             Usuarios.registrar_Usuario(matriz)
 
         elif opcion == "2":
-            Salas.imprimir_Salas(matriz)
+            Usuarios.imprimir_Usuarios(matriz)
 
         elif opcion == "3":
             Usuarios.modificar_Usuario(matriz)
