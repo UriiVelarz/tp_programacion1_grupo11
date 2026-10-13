@@ -1,11 +1,12 @@
 usuarios = [
-    ["Admin", "", "administrador"],
-    ["FacundoGozio", "", "cliente"],
-    ["TomasGallo", "", "cliente"],
-    ["AgustinT", "", "cliente"],
-    ["Uri_Velardez", "", "cliente"],
-    ["Fauzi", "", "cliente"]
+    ("Admin", "", "administrador"),
+    ("FacundoGozio", "", "cliente"),
+    ("TomasGallo", "", "cliente"),
+    ("AgustinT", "", "cliente"),
+    ("Uri_Velardez", "", "cliente")
+
 ]
+ROLES = {"administrador", "cliente"}
 MAX_INTENTOS = 3
 
 
@@ -27,11 +28,8 @@ def nombre_valido(nombre):
 
 
 def usuario_existe(nombre):
-    nombre_normalizado = normalizar_usuario(nombre)
-    for usuario in usuarios:
-        if normalizar_usuario(usuario[0]) == nombre_normalizado:
-            return True
-    return False
+    nombres_registrados = {normalizar_usuario(usuario[0]) for usuario in usuarios}
+    return normalizar_usuario(nombre) in nombres_registrados
 
 
 def buscar_usuario(nombre):
@@ -56,12 +54,13 @@ def registrar_usuario():
         if usuario_existe(nombre):
             print("Nombre ya registrado. Intente otro.")
             continue
-        nuevo = [nombre, "", "cliente"]
+        nuevo = (nombre, "", "cliente")
         usuarios.append(nuevo)
         print("Usuario", nombre, "registrado correctamente.")
         return nuevo
 
 
+   
 def iniciar_sesion():
     while True:
         nombre = input("Usuario o -1 para volver al menu principal: ").strip()
@@ -72,7 +71,11 @@ def iniciar_sesion():
         nombre = normalizar_usuario(nombre)
         usuario = buscar_usuario(nombre)
         if usuario is not None:
-            print("Bienvenido/a,", usuario[0], "(" + usuario[2] + ")")
+            nombre_usuario, _, rol = usuario
+            if rol not in ROLES:
+                print("El usuario tiene un rol invalido.")
+                return None
+            print(f"Bienvenido/a, {nombre_usuario} ({rol})")
             return usuario
 
         print("Usuario no encontrado. Intente nuevamente.")
