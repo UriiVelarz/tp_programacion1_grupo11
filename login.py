@@ -78,23 +78,7 @@ def iniciar_sesion():
         print("Usuario no encontrado. Intente nuevamente.")
 
 
-def menu_login():
-    while True:
-        print("\n--- ACCESO AL SISTEMA ---")
-        print("1. Iniciar sesion")
-        print("2. Registrarse")
-        print("3. Salir")
-        opcion = input("Opcion: ")
-        if opcion == "1":
-            u = iniciar_sesion()
-            if u is not None:
-                return u
-        elif opcion == "2":
-            registrar_usuario()
-        elif opcion == "3":
-            return None
-        else:
-            print("Opcion invalida. Intente nuevamente.")
+
 
 
 if __name__ == "__main__":
