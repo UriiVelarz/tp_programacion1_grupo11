@@ -1,5 +1,5 @@
 import Funciones
-
+import login
 
 usuarios = {
     1234: {"nombre": "Juan", "edad": 18, "mail": "juan@gmail.com", "telefono": 11553834},
@@ -41,38 +41,61 @@ def imprimir_Usuarios(usuarios):
 
 def registrar_Usuario(usuarios):
     '''
-        pre: recibe un diccionario de usuarios.
-        pos: solicita los datos para registrar a un nuevo usuario. si el id ya existe,
-             muestra error y finaliza. si el id es unico,
-             agrega un usuario al diccionario y muestra un mensaje de exito.
+    Registra un usuario con sus datos personales
+    y crea también su cuenta de login.
     '''
 
-    id_usuario_input = input("Ingresar Id o -1 para volver al menu principal: ")
+    id_usuario_input = input(
+        "Ingresar Id o -1 para volver al menu principal: "
+    )
     if volver_al_menu(id_usuario_input):
         return
-    id_usuario = int(id_usuario_input)
+
+    try:
+        id_usuario = int(id_usuario_input)
+    except ValueError:
+        print("El ID debe ser un número entero.")
+        return
 
     if id_usuario in usuarios:
         print("Id ya registrado")
         return
 
-    nombre = input("Ingresar Nombre o -1 para volver al menu principal: ")
+    nombre = input(
+        "Ingresar Nombre o -1 para volver al menu principal: "
+    )
     if volver_al_menu(nombre):
         return
 
-    edad_input = input("Ingresar Edad o -1 para volver al menu principal: ")
+    edad_input = input(
+        "Ingresar Edad o -1 para volver al menu principal: "
+    )
     if volver_al_menu(edad_input):
         return
-    edad = int(edad_input)
 
-    mail = input("Ingresar Mail o -1 para volver al menu principal: ")
+    try:
+        edad = int(edad_input)
+    except ValueError:
+        print("La edad debe ser un número entero.")
+        return
+
+    mail = input(
+        "Ingresar Mail o -1 para volver al menu principal: "
+    )
     if volver_al_menu(mail):
         return
 
-    telefono_input = input("Ingresar Telefono o -1 para volver al menu principal: ")
+    telefono_input = input(
+        "Ingresar Telefono o -1 para volver al menu principal: "
+    )
     if volver_al_menu(telefono_input):
         return
-    telefono = int(telefono_input)
+
+    try:
+        telefono = int(telefono_input)
+    except ValueError:
+        print("El teléfono debe contener números.")
+        return
 
     usuarios[id_usuario] = {
         "nombre": nombre,
@@ -81,8 +104,17 @@ def registrar_Usuario(usuarios):
         "telefono": telefono
     }
 
-    print("Usuario registrado correctamente")
+    nuevo_login = {
+        "id": id_usuario,
+        "nombre": str(id_usuario),
+        "contrasena": nombre,
+        "rol": "cliente"
+    }
 
+    login.usuarios.append(nuevo_login)
+
+    print("Usuario registrado correctamente")
+    print("También se creó su cuenta de login.")
 
 def eliminar_Usuario(usuarios):
     '''
