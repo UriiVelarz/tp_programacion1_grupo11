@@ -1,3 +1,5 @@
+import re
+
 import Funciones
 
 
@@ -19,24 +21,69 @@ def volver_al_menu(valor):
     return False
 
 
+def mail_valido(mail):
+    return re.fullmatch(
+        r"[^@\s]+@(gmail\.com|hotmail\.com|yahoo\.com|outlook\.com)",
+        mail,
+        re.IGNORECASE
+    ) is not None
+
+
+def solicitar_datos_personales():
+    while True:
+        edad_input = input("Ingresar Edad (entre 18 y 95) o -1 para volver al menu principal: ").strip()
+        if volver_al_menu(edad_input):
+            return None
+        try:
+            edad = int(edad_input)
+        except ValueError:
+            print("La edad debe ser un numero entero entre 18 y 95.")
+            continue
+        if 18 <= edad <= 95:
+            break
+        print("La edad debe estar entre 18 y 95.")
+
+    while True:
+        mail = input("Ingresar Mail (gmail.com, hotmail.com, yahoo.com u outlook.com) o -1 para volver: ").strip()
+        if volver_al_menu(mail):
+            return None
+        if mail_valido(mail):
+            break
+        print("El mail debe finalizar exactamente con @gmail.com, @hotmail.com, @yahoo.com o @outlook.com.")
+
+    while True:
+        telefono_input = input("Ingresar los 8 digitos del telefono (+54 9 11 [8 digitos]) o -1 para volver: ").strip()
+        if volver_al_menu(telefono_input):
+            return None
+        if re.fullmatch(r"[0-9]{8}", telefono_input):
+            break
+        print("El telefono debe contener exactamente 8 digitos numericos.")
+
+    return {
+        "edad": edad,
+        "mail": mail,
+        "telefono": f"+54 9 11 {telefono_input}"
+    }
+
+
 def imprimir_Usuarios(usuarios):
     '''
     pre: recibe un diccionario de usuarios, donde cada clave es el id
          y cada valor es otro diccionario con los datos del usuario.
     pos: devuelve por pantalla los usuarios formateados.
     '''
-    print("=" * 65)
+    print("=" * 78)
     print(f"{'Usuarios':42}")
-    print("=" * 65)
-    print(f"{'Id':<10}{'Nombre':<12}{'Edad':<8}{'Mail':<25}{'Telefono':<12}")
-    print("-" * 65)
+    print("=" * 78)
+    print(f"{'Id':<10}{'Nombre':<12}{'Edad':<8}{'Mail':<25}{'Telefono':<23}")
+    print("-" * 78)
 
     for id_usuario, usuario in Funciones.ordenar_usuarios_por_nombre(usuarios).items():
         mail = usuario['mail']
         if len(mail) > 20:
             mail = mail[:20] + "..."
         id_formateado = f"{int(id_usuario):05d}"
-        print(f"{id_formateado:<10}{usuario['nombre']:<12}{usuario['edad']:<8}{mail:<25}{usuario['telefono']:<12}")
+        print(f"{id_formateado:<10}{usuario['nombre']:<12}{usuario['edad']:<8}{mail:<25}{usuario['telefono']:<23}")
 
 
 def registrar_Usuario(usuarios):
@@ -60,25 +107,13 @@ def registrar_Usuario(usuarios):
     if volver_al_menu(nombre):
         return
 
-    edad_input = input("Ingresar Edad o -1 para volver al menu principal: ")
-    if volver_al_menu(edad_input):
+    datos_personales = solicitar_datos_personales()
+    if datos_personales is None:
         return
-    edad = int(edad_input)
-
-    mail = input("Ingresar Mail o -1 para volver al menu principal: ")
-    if volver_al_menu(mail):
-        return
-
-    telefono_input = input("Ingresar Telefono o -1 para volver al menu principal: ")
-    if volver_al_menu(telefono_input):
-        return
-    telefono = int(telefono_input)
 
     usuarios[id_usuario] = {
         "nombre": nombre,
-        "edad": edad,
-        "mail": mail,
-        "telefono": telefono
+        **datos_personales
     }
 
     print("Usuario registrado correctamente")
