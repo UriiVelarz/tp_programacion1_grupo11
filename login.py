@@ -1,13 +1,19 @@
+import re
+
+import Usuarios
+
+
 usuarios = [
-    ("Admin", "", "administrador"),
-    ("FacundoGozio", "", "cliente"),
-    ("TomasGallo", "", "cliente"),
-    ("AgustinT", "", "cliente"),
-    ("Uri_Velardez", "", "cliente")
+    {"id": 1, "nombre": "Admin", "contrasena": "", "rol": "administrador"},
+    {"id": 2, "nombre": "FacundoGozio", "contrasena": "", "rol": "cliente"},
+    {"id": 3, "nombre": "TomasGallo", "contrasena": "", "rol": "cliente"},
+    {"id": 4, "nombre": "AgustinT", "contrasena": "", "rol": "cliente"},
+    {"id": 5, "nombre": "Uri_Velardez", "contrasena": "", "rol": "cliente"}
 
 ]
 ROLES = {"administrador", "cliente"}
 MAX_INTENTOS = 3
+PROXIMO_ID_USUARIO = 1
 
 
 def normalizar_usuario(nombre):
@@ -27,15 +33,30 @@ def nombre_valido(nombre):
     return nombre.isalpha()
 
 
-def usuario_existe(nombre):
-    nombres_registrados = {normalizar_usuario(usuario[0]) for usuario in usuarios}
-    return normalizar_usuario(nombre) in nombres_registrados
+def contrasena_valida(contrasena):
+    return re.fullmatch(r"[^\W\d_]+", contrasena, re.UNICODE) is not None
 
 
-def buscar_usuario(nombre):
+def siguiente_id_usuario():
+    global PROXIMO_ID_USUARIO
+    ids_registrados = {int(usuario["id"]) for usuario in usuarios}
+    ids_registrados.update(int(id_usuario) for id_usuario in Usuarios.usuarios)
+
+    while PROXIMO_ID_USUARIO in ids_registrados:
+        PROXIMO_ID_USUARIO += 1
+
+    id_usuario = f"{PROXIMO_ID_USUARIO:05d}"
+    PROXIMO_ID_USUARIO += 1
+    return id_usuario
+
+
+def buscar_usuario(nombre, contrasena):
     nombre_normalizado = normalizar_usuario(nombre)
     for usuario in usuarios:
-        if normalizar_usuario(usuario[0]) == nombre_normalizado:
+        if (
+            normalizar_usuario(usuario["nombre"]) == nombre_normalizado
+            and usuario["contrasena"] == contrasena
+        ):
             return usuario
     return None
 
@@ -51,12 +72,40 @@ def registrar_usuario():
         if not nombre_valido(nombre):
             print("El nombre debe contener solo letras, sin numeros, espacios ni caracteres especiales. Ejemplo: Facundo.")
             continue
-        if usuario_existe(nombre):
-            print("Nombre ya registrado. Intente otro.")
-            continue
-        nuevo = (nombre, "", "cliente")
+
+        while True:
+            contrasena = input("Ingrese una contraseña (solo letras) o -1 para volver: ").strip()
+            if contrasena == "-1":
+                print("Volviendo al menu principal...")
+                return None
+            if not contrasena_valida(contrasena):
+                print("La contraseña debe contener solo letras, sin numeros ni caracteres especiales.")
+                continue
+            if any(
+                normalizar_usuario(usuario["nombre"]) == normalizar_usuario(nombre)
+                and usuario["contrasena"] == contrasena
+                for usuario in usuarios
+            ):
+                print("Ya existe una cuenta con ese usuario y contraseña. Elija otra contraseña.")
+                continue
+            break
+
+        datos_personales = Usuarios.solicitar_datos_personales()
+        if datos_personales is None:
+            return None
+
+        nuevo = {
+            "id": siguiente_id_usuario(),
+            "nombre": nombre,
+            "contrasena": contrasena,
+            "rol": "cliente"
+        }
         usuarios.append(nuevo)
-        print("Usuario", nombre, "registrado correctamente.")
+        Usuarios.usuarios[int(nuevo["id"])] = {
+            "nombre": nombre,
+            **datos_personales
+        }
+        print(f"Usuario {nombre} registrado correctamente. Su ID es {nuevo['id']}.")
         return nuevo
 
 
@@ -69,18 +118,13 @@ def iniciar_sesion():
             return None
 
         nombre = normalizar_usuario(nombre)
-        usuario = buscar_usuario(nombre)
+        contrasena = input("Contraseña: ")
+        usuario = buscar_usuario(nombre, contrasena)
         if usuario is not None:
-            nombre_usuario, _, rol = usuario
-            if rol not in ROLES:
+            if usuario["rol"] not in ROLES:
                 print("El usuario tiene un rol invalido.")
                 return None
-            print(f"Bienvenido/a, {nombre_usuario} ({rol})")
+            print(f"Bienvenido/a, {usuario['nombre']} ({usuario['rol']})")
             return usuario
 
-        print("Usuario no encontrado. Intente nuevamente.")
-
-
-
-
-
+        print("Usuario o contraseña incorrectos. Intente nuevamente.")
