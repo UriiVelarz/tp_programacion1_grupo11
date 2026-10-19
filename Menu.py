@@ -1,4 +1,3 @@
-import login
 import Reservas
 import Salas
 import Usuarios
@@ -51,10 +50,9 @@ def menu_principal():
         opcion = input("Seleccione una opcion: ").strip()
 
         if opcion == "1":
-            login.registrar_usuario()
-
+            Usuarios.registrar_usuario()
         elif opcion == "2":
-            usuario = login.iniciar_sesion()
+            usuario = Usuarios.iniciar_sesion()
             if usuario is not None:
                 menu_usuario_logueado(usuario)
 
@@ -68,8 +66,9 @@ def menu_principal():
             menu_usuarios(Usuarios.usuarios)
 
         elif opcion == "6":
-            Estadisticas.menu_estadisticas(Reservas.reservas, Salas.salas, Usuarios.usuarios)
-
+            Estadisticas.menu_estadisticas(
+                Reservas.reservas, Salas.salas, Usuarios.usuarios
+            )
         elif opcion == "7":
             print("Saliendo del sistema...")
             break
@@ -79,11 +78,10 @@ def menu_principal():
 
 
 def menu_salas(matriz):
-
     while True:
-        print ((f"\n=== Gestion de salas ==="))
+        print(f"\n=== Gestion de salas ===")
         print("1. Alta de sala")
-        print("2. listar salas")
+        print("2. Listar salas")
         print("3. Modificar sala")
         print("4. Baja de sala")
         print("5. Volver")
@@ -104,16 +102,16 @@ def menu_salas(matriz):
 
         elif opcion == "5":
             return
-            
+
         else:
             print("Opcion invalida")
 
-def menu_usuarios(matriz):
 
+def menu_usuarios(matriz):
     while True:
-        print ((f"\n=== Gestion de usuarios ==="))
+        print(f"\n=== Gestion de usuarios ===")
         print("1. Alta de usuario")
-        print("2. listar usuarios")
+        print("2. Listar usuarios")
         print("3. Modificar usuario")
         print("4. Baja de usuario")
         print("5. Volver")
@@ -134,7 +132,7 @@ def menu_usuarios(matriz):
 
         elif opcion == "5":
             return
-            
+
         else:
             print("Opcion invalida")
 
