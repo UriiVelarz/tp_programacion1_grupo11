@@ -90,6 +90,10 @@ def registrar_usuario():
                 continue
             break
 
+        datos_personales = Usuarios.solicitar_datos_personales()
+        if datos_personales is None:
+            return None
+
         nuevo = {
             "id": siguiente_id_usuario(),
             "nombre": nombre,
@@ -99,9 +103,7 @@ def registrar_usuario():
         usuarios.append(nuevo)
         Usuarios.usuarios[int(nuevo["id"])] = {
             "nombre": nombre,
-            "edad": 0,
-            "mail": "",
-            "telefono": 0
+            **datos_personales
         }
         print(f"Usuario {nombre} registrado correctamente. Su ID es {nuevo['id']}.")
         return nuevo
@@ -126,5 +128,3 @@ def iniciar_sesion():
             return usuario
 
         print("Usuario o contraseña incorrectos. Intente nuevamente.")
-
-
