@@ -1,4 +1,3 @@
-import login
 import Reservas
 import Salas
 import Usuarios
@@ -6,43 +5,31 @@ import Estadisticas
 
 def menu_usuario_logueado(usuario):
     while True:
-        print(f"\n=== Bienvenido/a {usuario[0]} ===")
+        print(f"\n=== Bienvenido/a {usuario['nombre']} (ID {usuario['id']}) ===")
         print("1. Reservar sala")
         print("2. Mostrar reservas")
         print("3. Modificar reserva")
         print("4. Cancelar reserva")
         print("5. Consultar disponibilidad por mes")
-        print("6. Gestionar Salas")
-        print("7. Gestionar Usuarios")
-        print("8. Reportes estadisticos")
-        print("9. Cerrar sesion")
+        print("6. Cerrar sesion")
         opcion = input("Seleccione una opcion: ").strip()
 
         if opcion == "1":
-            Reservas.realizar_Reserva(Reservas.reservas, id_usuario=usuario[0])
+            Reservas.realizar_Reserva(Reservas.reservas, id_usuario=usuario["id"])
 
         elif opcion == "2":
-            Reservas.imprimir_Reservas(Reservas.reservas, usuario=usuario[0])
+            Reservas.imprimir_Reservas(Reservas.reservas, usuario=usuario["id"])
 
         elif opcion == "3":
-            Reservas.modificar_Reserva(Reservas.reservas, usuario=usuario[0])
+            Reservas.modificar_Reserva(Reservas.reservas, usuario=usuario["id"])
 
         elif opcion == "4":
-            Reservas.eliminar_Reserva(Reservas.reservas, usuario=usuario[0])
+            Reservas.eliminar_Reserva(Reservas.reservas, usuario=usuario["id"])
 
         elif opcion == "5":
             Salas.consultar_disponibilidad_mensual()
 
         elif opcion == "6":
-            menu_salas(Salas.salas)     
-        
-        elif opcion == "7":
-            menu_usuarios(Usuarios.usuarios)
-        
-        elif opcion == "8":
-            Estadisticas.menu_estadisticas(Reservas.reservas, Salas.salas, Usuarios.usuarios)
-
-        elif opcion == "9":
             print("Sesion cerrada.")
             return
 
@@ -56,14 +43,16 @@ def menu_principal():
         print("1. Registrar usuario")
         print("2. Iniciar sesion")
         print("3. Consultar disponibilidad por mes")
-        print("4. Salir del sistema")
+        print("4. Gestionar Salas")
+        print("5. Gestionar Usuarios")
+        print("6. Reportes estadisticos")
+        print("7. Salir del sistema")
         opcion = input("Seleccione una opcion: ").strip()
 
         if opcion == "1":
-            login.registrar_usuario()
-
+            Usuarios.registrar_usuario()
         elif opcion == "2":
-            usuario = login.iniciar_sesion()
+            usuario = Usuarios.iniciar_sesion()
             if usuario is not None:
                 menu_usuario_logueado(usuario)
 
@@ -71,6 +60,16 @@ def menu_principal():
             Salas.consultar_disponibilidad_mensual()
 
         elif opcion == "4":
+            menu_salas(Salas.salas)
+
+        elif opcion == "5":
+            menu_usuarios(Usuarios.usuarios)
+
+        elif opcion == "6":
+            Estadisticas.menu_estadisticas(
+                Reservas.reservas, Salas.salas, Usuarios.usuarios
+            )
+        elif opcion == "7":
             print("Saliendo del sistema...")
             break
 
@@ -79,11 +78,10 @@ def menu_principal():
 
 
 def menu_salas(matriz):
-
     while True:
-        print ((f"\n=== Gestion de salas ==="))
+        print(f"\n=== Gestion de salas ===")
         print("1. Alta de sala")
-        print("2. listar salas")
+        print("2. Listar salas")
         print("3. Modificar sala")
         print("4. Baja de sala")
         print("5. Volver")
@@ -104,16 +102,16 @@ def menu_salas(matriz):
 
         elif opcion == "5":
             return
-            
+
         else:
             print("Opcion invalida")
 
-def menu_usuarios(matriz):
 
+def menu_usuarios(matriz):
     while True:
-        print ((f"\n=== Gestion de usuarios ==="))
+        print(f"\n=== Gestion de usuarios ===")
         print("1. Alta de usuario")
-        print("2. listar usuarios")
+        print("2. Listar usuarios")
         print("3. Modificar usuario")
         print("4. Baja de usuario")
         print("5. Volver")
@@ -134,7 +132,7 @@ def menu_usuarios(matriz):
 
         elif opcion == "5":
             return
-            
+
         else:
             print("Opcion invalida")
 
