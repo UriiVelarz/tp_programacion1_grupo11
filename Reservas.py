@@ -19,6 +19,13 @@ def volver_al_menu(valor):
     return False
 
 
+def convertir_entero(texto):
+    try:
+        return int(texto)
+    except ValueError:
+        return None
+
+
 def reservas_por_usuario(matriz, usuario):
     filtradas = Funciones.filtrar_reservas_por_usuario(matriz, usuario)
     return [(indice, reserva) for indice, reserva in enumerate(filtradas, start=1)]
@@ -106,8 +113,8 @@ def realizar_Reserva(matriz, id_usuario=0):
         if volver_al_menu(anio_input):
             return
         if anio_input.isdigit():
-            anio = int(anio_input)
-            if anio in (2026, 2027):
+            anio = convertir_entero(anio_input)
+            if anio is not None and anio in (2026, 2027):
                 break
         print("El año debe ser 2026 o 2027.")
 
@@ -116,8 +123,8 @@ def realizar_Reserva(matriz, id_usuario=0):
         if volver_al_menu(mes_input):
             return
         if mes_input.isdigit():
-            mes = int(mes_input)
-            if 1 <= mes <= 12:
+            mes = convertir_entero(mes_input)
+            if mes is not None and 1 <= mes <= 12:
                 break
         print("El mes debe estar entre 1 y 12.")
 
@@ -126,10 +133,11 @@ def realizar_Reserva(matriz, id_usuario=0):
         if volver_al_menu(dia_input):
             return
         if dia_input.isdigit():
-            dia = int(dia_input)
-            max_dia = obtener_dias_del_mes(mes)
-            if 1 <= dia <= max_dia:
-                break
+            dia = convertir_entero(dia_input)
+            if dia is not None:
+                max_dia = obtener_dias_del_mes(mes)
+                if 1 <= dia <= max_dia:
+                    break
         print(f"El dia debe estar entre 1 y {obtener_dias_del_mes(mes)} para ese mes.")
 
     while True:
@@ -137,8 +145,8 @@ def realizar_Reserva(matriz, id_usuario=0):
         if volver_al_menu(hora_input):
             return
         if hora_input.isdigit():
-            hora = int(hora_input)
-            if 9 <= hora <= 16:
+            hora = convertir_entero(hora_input)
+            if hora is not None and 9 <= hora <= 16:
                 break
         print("La hora debe estar entre 9 y 16 para reservar bloques de 2 horas.")
 
@@ -179,8 +187,9 @@ def eliminar_Reserva(matriz, usuario=None):
         if volver_al_menu(id_input):
             return
         if id_input.isdigit():
-            id_reserva = int(id_input)
-            break
+            id_reserva = convertir_entero(id_input)
+            if id_reserva is not None:
+                break
         print("Debes ingresar un numero valido.")
 
     lista = reservas_por_usuario(matriz, usuario)
@@ -220,8 +229,9 @@ def modificar_Reserva(matriz, usuario=None):
         if volver_al_menu(id_buscado_input):
             return
         if id_buscado_input.isdigit():
-            id_buscado = int(id_buscado_input)
-            break
+            id_buscado = convertir_entero(id_buscado_input)
+            if id_buscado is not None:
+                break
         print("Debes ingresar un numero valido.")
 
     reserva_encontrada = None
@@ -249,8 +259,8 @@ def modificar_Reserva(matriz, usuario=None):
         if volver_al_menu(anio_input):
             return
         if anio_input.isdigit():
-            anio = int(anio_input)
-            if anio in (2026, 2027):
+            anio = convertir_entero(anio_input)
+            if anio is not None and anio in (2026, 2027):
                 break
         print("El año debe ser 2026 o 2027.")
 
@@ -259,8 +269,8 @@ def modificar_Reserva(matriz, usuario=None):
         if volver_al_menu(mes_input):
             return
         if mes_input.isdigit():
-            mes = int(mes_input)
-            if 1 <= mes <= 12:
+            mes = convertir_entero(mes_input)
+            if mes is not None and 1 <= mes <= 12:
                 break
         print("El mes debe estar entre 1 y 12.")
 
@@ -269,10 +279,11 @@ def modificar_Reserva(matriz, usuario=None):
         if volver_al_menu(dia_input):
             return
         if dia_input.isdigit():
-            dia = int(dia_input)
-            max_dia = obtener_dias_del_mes(mes)
-            if 1 <= dia <= max_dia:
-                break
+            dia = convertir_entero(dia_input)
+            if dia is not None:
+                max_dia = obtener_dias_del_mes(mes)
+                if 1 <= dia <= max_dia:
+                    break
         print(f"El dia debe estar entre 1 y {obtener_dias_del_mes(mes)} para ese mes.")
 
     while True:
@@ -280,8 +291,8 @@ def modificar_Reserva(matriz, usuario=None):
         if volver_al_menu(hora_input):
             return
         if hora_input.isdigit():
-            hora = int(hora_input)
-            if 0 <= hora <= 23:
+            hora = convertir_entero(hora_input)
+            if hora is not None and 0 <= hora <= 23:
                 break
         print("La hora debe estar entre 0 y 23.")
 
