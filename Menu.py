@@ -3,6 +3,9 @@ import Salas
 import Usuarios
 import Estadisticas
 
+def es_admin(usuario):
+    return usuario.get("rol") == "administrador"
+
 def menu_usuario_logueado(usuario):
     while True:
         print(f"\n=== Bienvenido/a {usuario['nombre']} (ID {usuario['id']}) ===")
@@ -37,39 +40,58 @@ def menu_usuario_logueado(usuario):
             print("Opcion invalida, intenta otra vez.")
 
 
+def menu_admin(usuario):
+    while True:
+        print(f"\n=== Menu administrador: {usuario['nombre']} ===")
+        print("1. Gestionar salas")
+        print("2. Gestionar usuarios")
+        print("3. Reportes estadisticos")
+        print("4. Consultar disponibilidad por mes")
+        print("5. Cerrar sesion")
+        opcion = input("Seleccione una opcion: ").strip()
+
+        if opcion == "1":
+            menu_salas(Salas.salas)
+
+        elif opcion == "2":
+            menu_usuarios(Usuarios.usuarios)
+
+        elif opcion == "3":
+            Estadisticas.menu_estadisticas(
+                Reservas.reservas, Salas.salas, Usuarios.usuarios
+            )
+
+        elif opcion == "4":
+            Salas.consultar_disponibilidad_mensual()
+
+        elif opcion == "5":
+            print("Sesion cerrada.")
+            return
+
+        else:
+            print("Opcion invalida, intenta otra vez.")
+
+
 def menu_principal():
     while True:
         print("\n=== Sistema de reserva de salas ===")
         print("1. Registrar usuario")
         print("2. Iniciar sesion")
-        print("3. Consultar disponibilidad por mes")
-        print("4. Gestionar Salas")
-        print("5. Gestionar Usuarios")
-        print("6. Reportes estadisticos")
-        print("7. Salir del sistema")
+        print("3. Salir del sistema")
         opcion = input("Seleccione una opcion: ").strip()
 
         if opcion == "1":
             Usuarios.registrar_usuario()
+
         elif opcion == "2":
             usuario = Usuarios.iniciar_sesion()
             if usuario is not None:
-                menu_usuario_logueado(usuario)
+                if es_admin(usuario):
+                    menu_admin(usuario)
+                else:
+                    menu_usuario_logueado(usuario)
 
         elif opcion == "3":
-            Salas.consultar_disponibilidad_mensual()
-
-        elif opcion == "4":
-            menu_salas(Salas.salas)
-
-        elif opcion == "5":
-            menu_usuarios(Usuarios.usuarios)
-
-        elif opcion == "6":
-            Estadisticas.menu_estadisticas(
-                Reservas.reservas, Salas.salas, Usuarios.usuarios
-            )
-        elif opcion == "7":
             print("Saliendo del sistema...")
             break
 
@@ -135,6 +157,7 @@ def menu_usuarios(matriz):
 
         else:
             print("Opcion invalida")
+
 
 if __name__ == "__main__":
     menu_principal()
