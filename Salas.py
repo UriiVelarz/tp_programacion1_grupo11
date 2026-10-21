@@ -48,6 +48,13 @@ def validar_capacidad(texto):
     return re.fullmatch(r"[1-9]\d*", texto) is not None
 
 
+def convertir_entero(texto):
+    try:
+        return int(texto)
+    except ValueError:
+        return None
+
+
 def formatear_celda(texto, ancho):
     texto_limpio = limpiar_ansi(texto)
     espacios = max(0, ancho - len(texto_limpio))
@@ -145,8 +152,8 @@ def consultar_disponibilidad_mensual():
         if anio_input == "-1":
             return
         if anio_input.isdigit():
-            anio = int(anio_input)
-            if anio in (2026, 2027):
+            anio = convertir_entero(anio_input)
+            if anio is not None and anio in (2026, 2027):
                 break
         print("El año debe ser 2026 o 2027.")
 
@@ -155,8 +162,8 @@ def consultar_disponibilidad_mensual():
         if mes_input == "-1":
             return
         if mes_input.isdigit():
-            mes = int(mes_input)
-            if 1 <= mes <= 12:
+            mes = convertir_entero(mes_input)
+            if mes is not None and 1 <= mes <= 12:
                 break
         print("El mes debe estar entre 1 y 12.")
 
@@ -167,16 +174,16 @@ def consultar_disponibilidad_mensual():
         if dia_inicio_input == "-1":
             return
         if dia_inicio_input.isdigit():
-            dia_inicio = int(dia_inicio_input)
-            if 1 <= dia_inicio <= dias_del_mes:
+            dia_inicio = convertir_entero(dia_inicio_input)
+            if dia_inicio is not None and 1 <= dia_inicio <= dias_del_mes:
                 break
         print(f"El dia debe estar entre 1 y {dias_del_mes}.")
 
     while True:
         cantidad_dias_input = input("Ingrese la cantidad de dias a imprimir (maximo 30): ").strip()
         if cantidad_dias_input.isdigit():
-            cantidad_dias = int(cantidad_dias_input)
-            if 1 <= cantidad_dias <= 30:
+            cantidad_dias = convertir_entero(cantidad_dias_input)
+            if cantidad_dias is not None and 1 <= cantidad_dias <= 30:
                 break
         print("La cantidad de dias debe estar entre 1 y 30.")
 
@@ -257,7 +264,10 @@ def agregar_Sala(matriz):
         if not validar_id_sala(id_input):
             print("El Id debe ser un numero entero positivo.")
             continue
-        id_sala = int(id_input)
+        id_sala = convertir_entero(id_input)
+        if id_sala is None:
+            print("El Id debe ser un numero entero positivo.")
+            continue
         if any(sala[0] == id_sala for sala in matriz):
             print("Ese Id de sala ya existe.")
             continue
@@ -284,7 +294,10 @@ def agregar_Sala(matriz):
         if capacidad_input == "-1":
             return
         if validar_capacidad(capacidad_input):
-            capacidad = int(capacidad_input)
+            capacidad = convertir_entero(capacidad_input)
+            if capacidad is None:
+                print("La capacidad debe ser un numero entero positivo.")
+                continue
             break
         print("La capacidad debe ser un numero entero positivo.")
 
@@ -307,7 +320,10 @@ def eliminar_Sala(matriz):
         if not validar_id_sala(id_input):
             print("El Id debe ser un numero entero positivo.")
             continue
-        id_sala = int(id_input)
+        id_sala = convertir_entero(id_input)
+        if id_sala is None:
+            print("El Id debe ser un numero entero positivo.")
+            continue
         for sala in matriz:
             if sala[0] == id_sala:
                 matriz.remove(sala)
@@ -332,8 +348,12 @@ def modificar_Sala(matriz):
         if not validar_id_sala(id_buscado_input):
             print("El Id debe ser un numero entero positivo.")
             continue
+        id_buscado = convertir_entero(id_buscado_input)
+        if id_buscado is None:
+            print("El Id debe ser un numero entero positivo.")
+            continue
         fila_encontrada = next(
-            (fila for fila in matriz if fila[0] == int(id_buscado_input)),
+            (fila for fila in matriz if fila[0] == id_buscado),
             None
         )
         if fila_encontrada is not None:
@@ -347,7 +367,10 @@ def modificar_Sala(matriz):
         if not validar_id_sala(nuevo_id_input):
             print("El Id debe ser un numero entero positivo.")
             continue
-        nuevo_id = int(nuevo_id_input)
+        nuevo_id = convertir_entero(nuevo_id_input)
+        if nuevo_id is None:
+            print("El Id debe ser un numero entero positivo.")
+            continue
         if any(fila is not fila_encontrada and fila[0] == nuevo_id for fila in matriz):
             print("Ese Id de sala ya existe.")
             continue

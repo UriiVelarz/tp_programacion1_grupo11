@@ -20,9 +20,12 @@ def validar_fecha(texto):
     if not (partes[0].isdigit() and partes[1].isdigit() and partes[2].isdigit()):
         return None
 
-    dia = int(partes[0])
-    mes = int(partes[1])
-    anio = int(partes[2])
+    try:
+        dia = int(partes[0])
+        mes = int(partes[1])
+        anio = int(partes[2])
+    except ValueError:
+        return None
 
     if anio != 2026 and anio != 2027:
         return None
@@ -134,8 +137,13 @@ def nombre_tipo_sala(tipo):
 
 
 def nombre_usuario(usuarios, id_usuario):
-    if str(id_usuario).isdigit() and int(id_usuario) in usuarios:
-        return f"{usuarios[int(id_usuario)]['nombre']} (id {id_usuario})"
+    if str(id_usuario).isdigit():
+        try:
+            id_numerico = int(id_usuario)
+        except ValueError:
+            return str(id_usuario)
+        if id_numerico in usuarios:
+            return f"{usuarios[id_numerico]['nombre']} (id {id_usuario})"
     return str(id_usuario)
 
 
