@@ -1,30 +1,13 @@
-import hashlib
-import hmac
 import json
 import os
 import re
 
-usuarios = {
-    1: {"nombre": "Admin", "edad": None, "mail": "", "telefono": "", "contrasena": "", "rol": "administrador"},
-    2: {"nombre": "Facundo", "edad": 27, "mail": "facu@hotmail.com", "telefono": "+54 9 1159993061", "contrasena": "", "rol": "cliente"},
-    3: {"nombre": "Tomas", "edad": 21, "mail": "tomi@hotmail.com", "telefono": "+54 9 1158682965", "contrasena": "", "rol": "cliente"},
-    4: {"nombre": "Agustin", "edad": 20, "mail": "agus@hotmail.com", "telefono": "+54 9 1154683065", "contrasena": "", "rol": "cliente"},
-    5: {"nombre": "Uriel", "edad": 19, "mail": "uri@hotmail.com", "telefono": "+54 9 1154183061", "contrasena": "", "rol": "cliente"},
-}
+usuarios = {}
 
-_ultimo_id_asignado = max(usuarios, default=0)
+_ultimo_id_asignado = 0
 ARCHIVO_USUARIOS = os.path.join(os.path.dirname(__file__), "usuarios.json")
 ARCHIVO_TEMPORAL_USUARIOS = ARCHIVO_USUARIOS + ".tmp"
-ITERACIONES_HASH = 120_000
 _persistencia_habilitada = True
-
-
-def _crear_hash_contrasena(contrasena):
-    salt = os.urandom(16)
-    hash_contrasena = hashlib.pbkdf2_hmac(
-        "sha256", contrasena.encode("utf-8"), salt, ITERACIONES_HASH
-    )
-    return salt.hex(), hash_contrasena.hex()
 
 
 def _guardar_usuarios(matriz_usuarios):
@@ -50,16 +33,9 @@ def _guardar_usuarios(matriz_usuarios):
                     "edad": usuario.get("edad"),
                     "mail": usuario.get("mail", ""),
                     "telefono": usuario.get("telefono", ""),
+                    "contrasena": usuario.get("contrasena", ""),
                     "rol": usuario.get("rol", "cliente"),
                 }
-                contrasena = usuario.get("contrasena", "")
-                if usuario.get("_contrasena_hash") and usuario.get("_contrasena_salt"):
-                    registro_usuario["contrasena_hash"] = usuario["_contrasena_hash"]
-                    registro_usuario["contrasena_salt"] = usuario["_contrasena_salt"]
-                elif contrasena:
-                    salt, hash_contrasena = _crear_hash_contrasena(contrasena)
-                    registro_usuario["contrasena_hash"] = hash_contrasena
-                    registro_usuario["contrasena_salt"] = salt
 
                 arch.write(
                     json.dumps(str(id_usuario))
@@ -167,16 +143,17 @@ def _cargar_usuarios():
                     "edad": datos.get("edad"),
                     "mail": datos.get("mail", ""),
                     "telefono": datos.get("telefono", ""),
-                    "contrasena": "",
+                    "contrasena": datos.get("contrasena", ""),
                     "rol": datos.get("rol", "cliente"),
                 }
                 if datos.get("edad") is not None and type(datos.get("edad")) is not int:
                     _persistencia_habilitada = False
                     print(f"Edad invalida en la linea {numero_linea} del archivo de usuarios.")
                     return
-                if datos.get("contrasena_hash") and datos.get("contrasena_salt"):
-                    usuario["_contrasena_hash"] = datos["contrasena_hash"]
-                    usuario["_contrasena_salt"] = datos["contrasena_salt"]
+                if not isinstance(usuario["contrasena"], str):
+                    _persistencia_habilitada = False
+                    print(f"Contrasena invalida en la linea {numero_linea} del archivo de usuarios.")
+                    return
                 usuarios_cargados[id_usuario] = usuario
     except (OSError, UnicodeError) as error:
         _persistencia_habilitada = False
@@ -204,13 +181,11 @@ def volver_al_menu(valor):
 def normalizar_usuario(nombre):
     if nombre is None:
         return ""
-    nombre = nombre.strip().replace("_", " ")
-    return " ".join(nombre.split()).title()
+    return " ".join(nombre.strip().split())
 
 
 def nombre_valido(nombre):
-    nombre = normalizar_usuario(nombre)
-    return bool(nombre) and nombre.replace(" ", "").isalpha()
+    return bool(normalizar_usuario(nombre))
 
 
 def contrasena_valida(contrasena):
@@ -229,6 +204,15 @@ def siguiente_id_usuario():
     global _ultimo_id_asignado
     _ultimo_id_asignado = max(_ultimo_id_asignado, max(usuarios, default=0)) + 1
     return _ultimo_id_asignado
+
+
+def _usuario_repetido(nombre, matriz_usuarios, excluir_id=None):
+    nombre_normalizado = normalizar_usuario(nombre).casefold()
+    return any(
+        id_usuario != excluir_id
+        and normalizar_usuario(usuario.get("nombre")).casefold() == nombre_normalizado
+        for id_usuario, usuario in matriz_usuarios.items()
+    )
 
 
 def solicitar_datos_personales():
@@ -300,9 +284,19 @@ def registrar_Usuario(matriz_usuarios):
         print("ID ya registrado.")
         return
 
-    nombre = input("Ingresar nombre  (-1 para volver): ").strip()
-    if volver_al_menu(nombre):
-        return
+    while True:
+        nombre = input("Ingresar nombre de usuario  (-1 para volver): ").strip()
+        if volver_al_menu(nombre):
+            return
+        nombre = normalizar_usuario(nombre)
+        if not nombre_valido(nombre):
+            print("El nombre de usuario no puede estar vacio.")
+            continue
+        if _usuario_repetido(nombre, matriz_usuarios):
+            print("Usuario repetido, intente otra vez.")
+            continue
+        break
+
     datos = solicitar_datos_personales()
     if datos is None:
         return
@@ -355,9 +349,18 @@ def modificar_Usuario(usuarios):
         return
 
     usuario = usuarios[id_usuario]
-    nombre = input("Ingresar nuevo nombre  (-1 para volver): ").strip()
-    if volver_al_menu(nombre):
-        return
+    while True:
+        nombre = input("Ingresar nuevo nombre de usuario  (-1 para volver): ").strip()
+        if volver_al_menu(nombre):
+            return
+        nombre = normalizar_usuario(nombre)
+        if not nombre_valido(nombre):
+            print("El nombre de usuario no puede estar vacio.")
+            continue
+        if _usuario_repetido(nombre, usuarios, excluir_id=id_usuario):
+            print("Usuario repetido, intente otra vez.")
+            continue
+        break
     usuario["nombre"] = nombre
     _guardar_usuarios(usuarios)
 
@@ -400,29 +403,12 @@ def modificar_Usuario(usuarios):
 def buscar_usuario(nombre, contrasena):
     nombre_normalizado = normalizar_usuario(nombre)
     for id_usuario, usuario in usuarios.items():
-        coincide_contrasena = usuario.get("contrasena", "") == contrasena
-        if usuario.get("_contrasena_hash") and usuario.get("_contrasena_salt"):
-            try:
-                salt = bytes.fromhex(usuario["_contrasena_salt"])
-                hash_guardado = bytes.fromhex(usuario["_contrasena_hash"])
-                hash_ingresado = hashlib.pbkdf2_hmac(
-                    "sha256", contrasena.encode("utf-8"), salt, ITERACIONES_HASH
-                )
-                coincide_contrasena = hmac.compare_digest(hash_ingresado, hash_guardado)
-            except (TypeError, ValueError):
-                coincide_contrasena = False
-
         if (
-            normalizar_usuario(usuario.get("nombre")) == nombre_normalizado
-            and coincide_contrasena
+            normalizar_usuario(usuario.get("nombre")).casefold()
+            == nombre_normalizado.casefold()
+            and usuario.get("contrasena", "") == contrasena
         ):
-            # Se incluye el ID en la informacion devuelta para poder usarlo
-            # en otras partes del programa.
-            datos_visibles = {
-                clave: valor for clave, valor in usuario.items()
-                if not clave.startswith("_")
-            }
-            return {"id": id_usuario, **datos_visibles}
+            return {"id": id_usuario, **usuario}
     return None
 
 
@@ -434,10 +420,10 @@ def registrar_usuario():
             return None
         nombre = normalizar_usuario(nombre)
         if not nombre_valido(nombre):
-            print("El nombre debe contener solo letras y espacios.")
+            print("El nombre de usuario no puede estar vacio.")
             continue
-        if any(normalizar_usuario(u.get("nombre")) == nombre for u in usuarios.values()):
-            print("Ese nombre de usuario ya existe. Elija otro.")
+        if _usuario_repetido(nombre, usuarios):
+            print("Usuario repetido, intente otra vez.")
             continue
         break
 
@@ -479,13 +465,7 @@ def iniciar_sesion():
                 print("El usuario tiene un rol invalido.")
                 return None
             datos_guardados = usuarios.get(usuario["id"], {})
-            if not (
-                datos_guardados.get("contrasena")
-                or (
-                    datos_guardados.get("_contrasena_hash")
-                    and datos_guardados.get("_contrasena_salt")
-                )
-            ):
+            if not datos_guardados.get("contrasena"):
                 print("Esta cuenta todavia no tiene contrasena configurada. Contacte al administrador o registre una contrasena desde su gestion de usuarios.")
                 return None
             print(f"Bienvenido/a, {usuario['nombre']} ({usuario['rol']})")

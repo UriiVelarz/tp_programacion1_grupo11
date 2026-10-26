@@ -1,15 +1,68 @@
+import csv
+import os
+
 import Funciones
 
 
-reservas = [
-    [1000, 1, 1234, "01/09/2026", "08:00", "10:00"],
-    [1001, 2, 8254, "01/09/2026", "08:30", "10:30"],
-    [1002, 3, 4567, "01/09/2026", "09:00", "11:00"],
-    [1003, 1, 2130, "01/09/2026", "10:00", "12:00"],
-    [1004, 3, 1101, "02/09/2026", "08:00", "10:00"],
-    [1005, 2, 3653, "02/09/2026", "10:00", "12:00"],
-    [1006, 3, 3653, "02/09/2026", "13:00", "15:00"],
-]
+ARCHIVO_RESERVAS = os.path.join(os.path.dirname(__file__), "reservas.txt")
+ARCHIVO_TEMPORAL_RESERVAS = ARCHIVO_RESERVAS + ".tmp"
+_persistencia_habilitada = True
+reservas = []
+
+
+def _cargar_reservas():
+    global _persistencia_habilitada
+    if not os.path.exists(ARCHIVO_RESERVAS):
+        return
+
+    reservas_cargadas = []
+    try:
+        with open(ARCHIVO_RESERVAS, "r", encoding="utf-8", newline="") as archivo:
+            lector = csv.reader(archivo, delimiter=";")
+            encabezado = next(lector, None)
+            if encabezado != ["id_reserva", "tipo_sala", "id_usuario", "fecha", "inicio", "fin"]:
+                raise ValueError("El encabezado del archivo de reservas no es valido.")
+            for numero_linea, fila in enumerate(lector, start=2):
+                if len(fila) != 6:
+                    raise ValueError(f"Formato invalido en la linea {numero_linea}.")
+                id_reserva, tipo_sala, id_usuario = (int(valor) for valor in fila[:3])
+                fecha, inicio, fin = fila[3:]
+                if tipo_sala not in (1, 2, 3):
+                    raise ValueError(f"Tipo de sala invalido en la linea {numero_linea}.")
+                reservas_cargadas.append(
+                    [id_reserva, tipo_sala, id_usuario, fecha, inicio, fin]
+                )
+    except (OSError, UnicodeError, csv.Error, ValueError) as error:
+        _persistencia_habilitada = False
+        print(f"No se pudo cargar el archivo de reservas: {error}")
+        return
+
+    reservas.extend(reservas_cargadas)
+
+
+def _guardar_reservas(matriz):
+    if matriz is not reservas:
+        return
+    if not _persistencia_habilitada:
+        print("No se guardaron los cambios porque el archivo de reservas no se pudo leer.")
+        return
+
+    try:
+        with open(ARCHIVO_TEMPORAL_RESERVAS, "w", encoding="utf-8", newline="") as archivo:
+            escritor = csv.writer(archivo, delimiter=";")
+            escritor.writerow(
+                ["id_reserva", "tipo_sala", "id_usuario", "fecha", "inicio", "fin"]
+            )
+            escritor.writerows(matriz)
+        os.replace(ARCHIVO_TEMPORAL_RESERVAS, ARCHIVO_RESERVAS)
+    except (OSError, csv.Error, TypeError, ValueError) as error:
+        try:
+            os.remove(ARCHIVO_TEMPORAL_RESERVAS)
+        except FileNotFoundError:
+            pass
+        except OSError as error_limpieza:
+            print(f"No se pudo limpiar el archivo temporal: {error_limpieza}")
+        print(f"No se pudieron guardar las reservas: {error}")
 
 
 def volver_al_menu(valor):
@@ -28,7 +81,7 @@ def convertir_entero(texto):
 
 def reservas_por_usuario(matriz, usuario):
     filtradas = Funciones.filtrar_reservas_por_usuario(matriz, usuario)
-    return [(indice, reserva) for indice, reserva in enumerate(filtradas, start=1)]
+    return [(reserva[0], reserva) for reserva in filtradas]
 
 
 def imprimir_Reservas(matriz, usuario=None):
@@ -51,9 +104,9 @@ def imprimir_Reservas(matriz, usuario=None):
         if not lista:
             print("No hay reservas para este usuario.")
             return
-        for id_local, reserva in lista:
+        for id_reserva, reserva in lista:
             _, sala, id_usuario, fecha, inicio, fin = reserva
-            print(f"{id_local:<12}{sala:<8}{id_usuario:<12}{fecha:<14}{inicio:<12}{fin:<12}")
+            print(f"{id_reserva:<12}{sala:<8}{id_usuario:<12}{fecha:<14}{inicio:<12}{fin:<12}")
         return
 
     for reserva in reservas_ordenadas:
@@ -90,6 +143,34 @@ def hay_conflicto_reserva_usuario(matriz, usuario, fecha, inicio, reserva_exclui
     return False
 
 
+def contar_reservas_solapadas(
+    matriz, tipo_sala, fecha, inicio, fin, reserva_excluida=None
+):
+    inicio_solicitado = int(inicio[:2])
+    fin_solicitado = int(fin[:2])
+    cantidad = 0
+    for reserva in matriz:
+        if reserva is reserva_excluida or reserva[1] != tipo_sala or reserva[3] != fecha:
+            continue
+        inicio_existente = int(reserva[4][:2])
+        fin_existente = int(reserva[5][:2])
+        if inicio_solicitado < fin_existente and inicio_existente < fin_solicitado:
+            cantidad += 1
+    return cantidad
+
+
+def hay_capacidad_disponible(
+    matriz, tipo_sala, fecha, inicio, fin, reserva_excluida=None
+):
+    import Salas
+
+    capacidad = Salas.cantidad_salas_tipo(tipo_sala)
+    ocupadas = contar_reservas_solapadas(
+        matriz, tipo_sala, fecha, inicio, fin, reserva_excluida
+    )
+    return ocupadas < capacidad
+
+
 def realizar_Reserva(matriz, id_usuario=0):
     '''
     pre: recibe una matriz de reservas, donde cada fila representa una reserva con sus datos
@@ -98,12 +179,20 @@ def realizar_Reserva(matriz, id_usuario=0):
          solicita el tamaño de sala, la fecha y la hora, y guarda la reserva.
     '''
 
-    print("Selecciona el tamaño de la sala:")
-    print("1. Pequeña")
-    print("2. Mediana")
-    print("3. Grande")
+    import Salas
 
-    opcion_sala = pedir_opcion("Ingresar opcion: ", ("1", "2", "3"))
+    opciones = []
+    print("Selecciona el tamaño de la sala:")
+    for tipo, datos in Salas.TIPOS_SALA.items():
+        cantidad = Salas.cantidad_salas_tipo(tipo)
+        print(f"{tipo}. {datos['nombre']} ({cantidad} salas)")
+        if cantidad:
+            opciones.append(str(tipo))
+
+    if not opciones:
+        print("No hay salas disponibles para reservar.")
+        return
+    opcion_sala = pedir_opcion("Ingresar opcion: ", tuple(opciones))
     if opcion_sala == "-1":
         return
     id_sala = int(opcion_sala)
@@ -159,10 +248,15 @@ def realizar_Reserva(matriz, id_usuario=0):
         print("No puedes reservar en un dia y horario que ya habias reservado antes.")
         return
 
-    contador = Funciones.contar_reservas_por_usuario(matriz, id_usuario) + 1
+    if not hay_capacidad_disponible(matriz, id_sala, fecha, inicio, fin):
+        print("No quedan salas de ese tipo disponibles en ese horario.")
+        return
+
+    contador = max((reserva[0] for reserva in matriz), default=0) + 1
 
     nuevaReserva = [contador, id_sala, id_usuario, fecha, inicio, fin]
     matriz.append(nuevaReserva)
+    _guardar_reservas(matriz)
     print("Reserva agregada correctamente")
     print(f"Detalle: Sala {id_sala} - Fecha {fecha} - Inicio {inicio} - Fin {fin}")
 
@@ -194,9 +288,10 @@ def eliminar_Reserva(matriz, usuario=None):
 
     lista = reservas_por_usuario(matriz, usuario)
 
-    for numero, reserva in lista:
-        if numero == id_reserva:
+    for id_guardado, reserva in lista:
+        if id_guardado == id_reserva:
             matriz.remove(reserva)
+            _guardar_reservas(matriz)
             print("Reserva eliminada correctamente")
             return
 
@@ -235,8 +330,8 @@ def modificar_Reserva(matriz, usuario=None):
         print("Debes ingresar un numero valido.")
 
     reserva_encontrada = None
-    for numero, reserva in lista:
-        if numero == id_buscado:
+    for id_guardado, reserva in lista:
+        if id_guardado == id_buscado:
             reserva_encontrada = reserva
             break
 
@@ -244,12 +339,20 @@ def modificar_Reserva(matriz, usuario=None):
         print("Reserva no encontrada. Intente nuevamente.")
         return
 
-    print("Selecciona el nuevo tamaño de la sala:")
-    print("1. Pequeña")
-    print("2. Mediana")
-    print("3. Grande")
+    import Salas
 
-    nuevo_sala_input = pedir_opcion("Ingresar opcion: ", ("1", "2", "3"))
+    opciones = []
+    print("Selecciona el nuevo tamaño de la sala:")
+    for tipo, datos in Salas.TIPOS_SALA.items():
+        cantidad = Salas.cantidad_salas_tipo(tipo)
+        print(f"{tipo}. {datos['nombre']} ({cantidad} salas)")
+        if cantidad:
+            opciones.append(str(tipo))
+
+    if not opciones:
+        print("No hay salas disponibles para reservar.")
+        return
+    nuevo_sala_input = pedir_opcion("Ingresar opcion: ", tuple(opciones))
     if nuevo_sala_input == "-1":
         return
     nuevo_sala = int(nuevo_sala_input)
@@ -292,9 +395,9 @@ def modificar_Reserva(matriz, usuario=None):
             return
         if hora_input.isdigit():
             hora = convertir_entero(hora_input)
-            if hora is not None and 0 <= hora <= 23:
+            if hora is not None and 9 <= hora <= 16:
                 break
-        print("La hora debe estar entre 0 y 23.")
+        print("La hora debe estar entre 9 y 16 para reservar bloques de 2 horas.")
 
     nueva_fecha = f"{dia:02d}/{mes:02d}/{anio}"
     nuevo_inicio = f"{hora:02d}:00"
@@ -302,10 +405,20 @@ def modificar_Reserva(matriz, usuario=None):
         print("No puedes reservar en un dia y horario que ya habias reservado antes.")
         return
 
-    hora_fin = (hora + 2) % 24
+    nuevo_fin = f"{hora + 2:02d}:00"
+    if not hay_capacidad_disponible(
+        matriz, nuevo_sala, nueva_fecha, nuevo_inicio, nuevo_fin, reserva_encontrada
+    ):
+        print("No quedan salas de ese tipo disponibles en ese horario.")
+        return
+
     reserva_encontrada[1] = nuevo_sala
     reserva_encontrada[3] = nueva_fecha
     reserva_encontrada[4] = nuevo_inicio
-    reserva_encontrada[5] = f"{hora_fin:02d}:00"
+    reserva_encontrada[5] = nuevo_fin
+    _guardar_reservas(matriz)
 
     print("Reserva modificada correctamente")
+
+
+_cargar_reservas()

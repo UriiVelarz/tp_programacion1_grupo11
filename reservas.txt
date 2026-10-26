@@ -1,0 +1,1 @@
+id_reserva;tipo_sala;id_usuario;fecha;inicio;fin
