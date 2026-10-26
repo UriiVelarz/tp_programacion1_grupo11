@@ -1,1 +1,2 @@
-id_reserva;tipo_sala;id_usuario;fecha;inicio;fin
+id_reserva ;tipo_sala;id_usuario;fecha     ;inicio;fin  
+1          ;1        ;8         ;26/10/2026;09:00 ;11:00

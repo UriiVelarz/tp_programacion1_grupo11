@@ -1,20 +1,18 @@
+import csv
+import os
 import re
 import datetime 
 from Reservas import reservas
 
-salas = [
-    [1, "Sala A", "Primer  Piso", 2, 1],
-    [2, "Sala B", "Primer  Piso", 2, 2],
-    [3, "Sala C", "Primer  Piso", 4, 3],
-    [4, "Sala A", "Segundo Piso", 2, 1],
-    [5, "Sala B", "Segundo Piso", 2, 2],
-    [6, "Sala C", "Segundo Piso", 4, 3]
-]
+ARCHIVO_SALAS = os.path.join(os.path.dirname(__file__), "salas.txt")
+ARCHIVO_TEMPORAL_SALAS = ARCHIVO_SALAS + ".tmp"
+_persistencia_salas_habilitada = True
+salas = []
 
 TIPOS_SALA = {
-    1: {"nombre": "Pequeña", "cantidad": 0},
-    2: {"nombre": "Mediana", "cantidad": 0},
-    3: {"nombre": "Grande", "cantidad": 0},
+    1: {"nombre": "Pequeña", "cantidad": 0, "capacidad_minima": 2, "capacidad_maxima": 6},
+    2: {"nombre": "Mediana", "cantidad": 0, "capacidad_minima": 7, "capacidad_maxima": 12},
+    3: {"nombre": "Grande", "cantidad": 0, "capacidad_minima": 12, "capacidad_maxima": 24},
 }
 
 dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
@@ -32,16 +30,6 @@ def limpiar_ansi(texto):
 
 def validar_id_sala(texto):
     return re.fullmatch(r"[1-9]\d*", texto) is not None
-
-
-def validar_nombre_sala(texto):
-    patron = r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9]+(?:[ -]+[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9]+)*"
-    return re.fullmatch(patron, texto.strip()) is not None
-
-
-def validar_ubicacion(texto):
-    patron = r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9]+(?:[ -]+[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9]+)*"
-    return re.fullmatch(patron, texto.strip()) is not None
 
 
 def validar_capacidad(texto):
@@ -62,16 +50,87 @@ def formatear_celda(texto, ancho):
 
 
 def tipo_sala(sala):
-    if len(sala) > 4 and sala[4] in TIPOS_SALA:
-        return sala[4]
-    nombre = sala[1].strip().casefold()
-    if nombre.endswith("a"):
-        return 1
-    if nombre.endswith("b"):
-        return 2
-    if nombre.endswith("c"):
-        return 3
-    return None
+    return ((sala[0] - 1) // 2) % len(TIPOS_SALA) + 1
+
+
+def capacidad_valida(tipo, capacidad):
+    datos_tipo = TIPOS_SALA[tipo]
+    return datos_tipo["capacidad_minima"] <= capacidad <= datos_tipo["capacidad_maxima"]
+
+
+def _letra_sala(indice):
+    letras = ""
+    numero = indice + 1
+    while numero:
+        numero, resto = divmod(numero - 1, 26)
+        letras = chr(ord("A") + resto) + letras
+    return letras
+
+
+def _actualizar_nombres_salas(matriz):
+    cantidades = {tipo: 0 for tipo in TIPOS_SALA}
+    for sala in sorted(matriz, key=lambda elemento: (tipo_sala(elemento), elemento[0])):
+        tipo = tipo_sala(sala)
+        sala[3] = tipo
+        sala[1] = f"Sala {TIPOS_SALA[tipo]['nombre'].lower()} {_letra_sala(cantidades[tipo])}"
+        cantidades[tipo] += 1
+
+
+def _cargar_salas():
+    global _persistencia_salas_habilitada
+    if not os.path.exists(ARCHIVO_SALAS):
+        print(f"No se encontro el archivo de salas: {ARCHIVO_SALAS}")
+        return
+
+    salas_cargadas = []
+    try:
+        with open(ARCHIVO_SALAS, "r", encoding="utf-8", newline="") as archivo:
+            lector = csv.reader(archivo, delimiter=";")
+            encabezado = next(lector, None)
+            if encabezado != ["id_sala", "nombre", "capacidad"]:
+                raise ValueError("El encabezado del archivo de salas no es valido.")
+            for numero_linea, fila in enumerate(lector, start=2):
+                if len(fila) != 3:
+                    raise ValueError(f"Formato invalido en la linea {numero_linea}.")
+                id_sala, capacidad = int(fila[0]), int(fila[2])
+                tipo = tipo_sala([id_sala])
+                if id_sala < 1 or not capacidad_valida(tipo, capacidad):
+                    raise ValueError(f"Datos invalidos en la linea {numero_linea}.")
+                salas_cargadas.append(
+                    [id_sala, fila[1], capacidad, tipo]
+                )
+    except (OSError, UnicodeError, csv.Error, ValueError) as error:
+        _persistencia_salas_habilitada = False
+        print(f"No se pudo cargar el archivo de salas: {error}")
+        return
+
+    _actualizar_nombres_salas(salas_cargadas)
+    salas.extend(salas_cargadas)
+
+
+def _guardar_salas(matriz):
+    if matriz is not salas:
+        return
+    if not _persistencia_salas_habilitada:
+        print("No se guardaron los cambios porque el archivo de salas no se pudo leer.")
+        return
+
+    try:
+        with open(ARCHIVO_TEMPORAL_SALAS, "w", encoding="utf-8", newline="") as archivo:
+            escritor = csv.writer(archivo, delimiter=";")
+            escritor.writerow(["id_sala", "nombre", "capacidad"])
+            escritor.writerows(sala[:3] for sala in matriz)
+        os.replace(ARCHIVO_TEMPORAL_SALAS, ARCHIVO_SALAS)
+    except (OSError, csv.Error, TypeError, ValueError) as error:
+        try:
+            os.remove(ARCHIVO_TEMPORAL_SALAS)
+        except FileNotFoundError:
+            pass
+        except OSError as error_limpieza:
+            print(f"No se pudo limpiar el archivo temporal de salas: {error_limpieza}")
+        print(f"No se pudieron guardar las salas: {error}")
+
+_cargar_salas()
 
 
 def cantidad_salas_tipo(tipo, matriz=None):
@@ -107,8 +166,8 @@ def mostrar_matriz():
     print("-" * len(encabezado))
 
     for i in range(len(salas)):
-        _, nombre, piso, _ = salas[i][:4]
-        etiqueta = f"{nombre}({piso})"
+        nombre = salas[i][1]
+        etiqueta = nombre
         disponibilidad = matriz_disponibilidad[i % len(matriz_disponibilidad)]
         fila = f"{etiqueta:<25}" + "".join(f"{disponibilidad[j]:<11}" for j in range(len(dias)))
         print(fila)
@@ -290,31 +349,30 @@ def consultar_disponibilidad_mensual():
 def imprimir_Salas(matriz):
     '''
     pre: recibe una matriz de salas, donde cada fila representa una sala con sus datos
-         [id_sala, nombre_sala, ubicacion, capacidad].
+         [id_sala, nombre_sala, capacidad, tipo].
     pos: devuelve por pantalla la matriz de salas fomateada.
     '''
-    print("=" * 55)
-    print(f"{'Salas':42}")
-    print("=" * 55)
-    print(f"{'Id_Sala':<10}{'Nombre':<10}{'Ubicacion':<15}{'capacidad':<14}{'Tipo':<14}")
-    print("-" * 55)
+    print("=" * 48)
+    print(f"{'Salas':35}")
+    print("=" * 48)
+    print(f"{'Id_Sala':<10}{'Nombre':<22}{'Capacidad':<12}{'Tipo':<12}")
+    print("-" * 48)
 
     for i in range(len(matriz)):
         id_sala = matriz[i][0]
         nombre_sala = matriz[i][1]
-        ubicacion = matriz[i][2]
-        capacidad = matriz[i][3]
+        capacidad = matriz[i][2]
         tipo = tipo_sala(matriz[i])
         nombre_tipo = TIPOS_SALA[tipo]["nombre"] if tipo in TIPOS_SALA else "Sin tipo"
-        print(f"{id_sala:<10}{nombre_sala:<10}{ubicacion:15}{capacidad:<14}{nombre_tipo:<14}")
+        print(f"{id_sala:<10}{nombre_sala:<22}{capacidad:<12}{nombre_tipo:<12}")
 
 
 def agregar_Sala(matriz):
     '''
     pre: recibe una matriz de salas, donde cada fila representa una sala con sus datos
-         id_sala, nombre_sala, ubicacion, capacidad].
+         [id_sala, nombre_sala, capacidad, tipo].
     pos: solicita los datos para registrar una nueva sala. si el id ya existe, muestra error y finaliza. si el id es unico, 
-         agrega una sala a la matriz al final de la lista y muestra un mensaje de exito.
+         agrega la sala con el nombre que corresponde a su posicion y muestra un mensaje de exito.
     '''
     while True:
         id_input = input("Ingresar Id de sala o -1 para volver al menu principal: ").strip()
@@ -332,35 +390,8 @@ def agregar_Sala(matriz):
             continue
         break
 
-    while True:
-        nombre_sala = input("Ingresar nombre de sala o -1 para volver al menu principal: ").strip()
-        if nombre_sala == "-1":
-            return
-        if validar_nombre_sala(nombre_sala):
-            break
-        print("El nombre solo puede contener letras, numeros, espacios y guiones.")
-
-    while True:
-        ubicacion = input("Ingresar ubicacion o -1 para volver al menu principal: ").strip()
-        if ubicacion == "-1":
-            return
-        if validar_ubicacion(ubicacion):
-            break
-        print("La ubicacion solo puede contener letras, numeros, espacios y guiones.")
-
-    while True:
-        print("Tipo de sala:")
-        for tipo, datos in TIPOS_SALA.items():
-            print(f"{tipo}. {datos['nombre']}")
-        tipo_input = input(
-            "Ingresar tipo de sala o -1 para volver al menu principal: "
-        ).strip()
-        if tipo_input == "-1":
-            return
-        tipo = convertir_entero(tipo_input)
-        if tipo in TIPOS_SALA:
-            break
-        print("Debe seleccionar un tipo de sala valido.")
+    tipo = ((id_sala - 1) // 2) % len(TIPOS_SALA) + 1
+    print(f"Categoria asignada por ID: {TIPOS_SALA[tipo]['nombre']}")
 
     while True:
         capacidad_input = input("Ingresar capacidad o -1 para volver al menu principal: ").strip()
@@ -371,19 +402,33 @@ def agregar_Sala(matriz):
             if capacidad is None:
                 print("La capacidad debe ser un numero entero positivo.")
                 continue
+            if not capacidad_valida(tipo, capacidad):
+                datos_tipo = TIPOS_SALA[tipo]
+                print(
+                    f"La capacidad para salas {datos_tipo['nombre'].lower()} "
+                    f"debe estar entre {datos_tipo['capacidad_minima']} "
+                    f"y {datos_tipo['capacidad_maxima']} personas."
+                )
+                continue
             break
-        print("La capacidad debe ser un numero entero positivo.")
+        datos_tipo = TIPOS_SALA[tipo]
+        print(
+            f"La capacidad debe ser un numero entre {datos_tipo['capacidad_minima']} "
+            f"y {datos_tipo['capacidad_maxima']}."
+        )
 
-    nuevaSala = [id_sala, nombre_sala, ubicacion, capacidad, tipo]
+    nuevaSala = [id_sala, "", capacidad, tipo]
     matriz.append(nuevaSala)
+    _actualizar_nombres_salas(matriz)
     actualizar_cantidad_tipos(matriz)
+    _guardar_salas(matriz)
     print("Sala agregada correctamente")
 
 
 def eliminar_Sala(matriz):
     '''
         pre: recibe una matriz de salas, donde cada fila representa una sala con sus datos
-             id_sala, nombre_sala, ubicacion, capacidad].
+             [id_sala, nombre_sala, capacidad, tipo].
         pos: solicita un id de sala por consola. si el id existe en la matriz, elimina la sala de 
              la matriz original y muestra un mensaje de exito. si no existe, muestra un mensaje de error.
     '''
@@ -401,7 +446,9 @@ def eliminar_Sala(matriz):
         for sala in matriz:
             if sala[0] == id_sala:
                 matriz.remove(sala)
+                _actualizar_nombres_salas(matriz)
                 actualizar_cantidad_tipos(matriz)
+                _guardar_salas(matriz)
                 print("Sala eliminado correctamente")
                 return
         print("No se encontro el id de Sala")
@@ -411,9 +458,8 @@ def eliminar_Sala(matriz):
 def modificar_Sala(matriz):
     '''
         pre: recibe una matriz de salas, donde cada fila representa una sala con sus datos
-             id_sala, nombre_sala, ubicacion, capacidad].
-        pos: solicita un id de sala por consola. si lo encuentra, pide los nuevos datos 
-             (sala, usuario, fecha, inicio y fin) para sobreescribir los valores originales en la matriz.
+             [id_sala, nombre_sala, capacidad, tipo].
+        pos: solicita un id de sala por consola. si lo encuentra, permite modificar el id y la capacidad.
              si el id no existe, la funcion termina sin realizar cambios.
     '''
     while True:
@@ -451,23 +497,25 @@ def modificar_Sala(matriz):
             continue
         break
 
+    nuevo_tipo = tipo_sala([nuevo_id])
+    datos_tipo = TIPOS_SALA[nuevo_tipo]
     while True:
-        nuevo_nombre = input("Ingresar nuevo nombre de sala o -1 para volver al menu principal: ").strip()
-        if nuevo_nombre == "-1":
+        capacidad_input = input(
+            f"Ingresar nueva capacidad ({datos_tipo['capacidad_minima']}-"
+            f"{datos_tipo['capacidad_maxima']}) o -1 para volver al menu principal: "
+        ).strip()
+        if capacidad_input == "-1":
             return
-        if validar_nombre_sala(nuevo_nombre):
+        capacidad = convertir_entero(capacidad_input) if validar_capacidad(capacidad_input) else None
+        if capacidad is not None and capacidad_valida(nuevo_tipo, capacidad):
             break
-        print("El nombre solo puede contener letras, numeros, espacios y guiones.")
-
-    while True:
-        nueva_ubicacion = input("Ingresar nueva ubicacion de la sala o -1 para volver al menu principal: ").strip()
-        if nueva_ubicacion == "-1":
-            return
-        if validar_ubicacion(nueva_ubicacion):
-            break
-        print("La ubicacion solo puede contener letras, numeros, espacios y guiones.")
-
+        print(
+            f"La capacidad para salas {datos_tipo['nombre'].lower()} debe estar entre "
+            f"{datos_tipo['capacidad_minima']} y {datos_tipo['capacidad_maxima']} personas."
+        )
     fila_encontrada[0] = nuevo_id
-    fila_encontrada[1] = nuevo_nombre
-    fila_encontrada[2] = nueva_ubicacion
+    fila_encontrada[2] = capacidad
+    _actualizar_nombres_salas(matriz)
+    actualizar_cantidad_tipos(matriz)
+    _guardar_salas(matriz)
     print("Sala modificada correctamente")

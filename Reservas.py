@@ -1,4 +1,5 @@
 import csv
+import datetime
 import os
 
 import Funciones
@@ -20,9 +21,12 @@ def _cargar_reservas():
         with open(ARCHIVO_RESERVAS, "r", encoding="utf-8", newline="") as archivo:
             lector = csv.reader(archivo, delimiter=";")
             encabezado = next(lector, None)
+            if encabezado is not None:
+                encabezado = [columna.strip() for columna in encabezado]
             if encabezado != ["id_reserva", "tipo_sala", "id_usuario", "fecha", "inicio", "fin"]:
                 raise ValueError("El encabezado del archivo de reservas no es valido.")
             for numero_linea, fila in enumerate(lector, start=2):
+                fila = [valor.strip() for valor in fila]
                 if len(fila) != 6:
                     raise ValueError(f"Formato invalido en la linea {numero_linea}.")
                 id_reserva, tipo_sala, id_usuario = (int(valor) for valor in fila[:3])
@@ -50,10 +54,23 @@ def _guardar_reservas(matriz):
     try:
         with open(ARCHIVO_TEMPORAL_RESERVAS, "w", encoding="utf-8", newline="") as archivo:
             escritor = csv.writer(archivo, delimiter=";")
+            encabezado = ["id_reserva", "tipo_sala", "id_usuario", "fecha", "inicio", "fin"]
+            filas = [[str(valor) for valor in reserva] for reserva in matriz]
+            anchos = [
+                max(len(encabezado[indice]), *(len(fila[indice]) for fila in filas))
+                if filas else len(encabezado[indice])
+                for indice in range(len(encabezado))
+            ]
             escritor.writerow(
-                ["id_reserva", "tipo_sala", "id_usuario", "fecha", "inicio", "fin"]
+                [columna.ljust(anchos[indice]) for indice, columna in enumerate(encabezado)]
             )
-            escritor.writerows(matriz)
+            escritor.writerows(
+                [
+                    valor.ljust(anchos[indice])
+                    for indice, valor in enumerate(fila)
+                ]
+                for fila in filas
+            )
         os.replace(ARCHIVO_TEMPORAL_RESERVAS, ARCHIVO_RESERVAS)
     except (OSError, csv.Error, TypeError, ValueError) as error:
         try:
@@ -120,6 +137,61 @@ def obtener_dias_del_mes(mes):
         7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31
     }
     return dias_por_mes.get(mes, 0)
+
+
+def pedir_fecha_reserva(etiqueta=""):
+    import Salas
+
+    fecha_hoy = datetime.date.today()
+    fecha_maxima = Salas.fecha_maxima_consulta(fecha_hoy)
+    prefijo = f"{etiqueta} " if etiqueta else ""
+
+    while True:
+        anio_input = input(
+            f"Ingresar {prefijo}año ({fecha_hoy.year} a {fecha_maxima.year}) "
+            "o -1 para volver al menu principal: "
+        ).strip()
+        if volver_al_menu(anio_input):
+            return None
+        anio = convertir_entero(anio_input) if anio_input.isdigit() else None
+        if anio is not None and fecha_hoy.year <= anio <= fecha_maxima.year:
+            break
+        print(f"El año debe estar entre {fecha_hoy.year} y {fecha_maxima.year}.")
+
+    while True:
+        mes_input = input(
+            f"Ingresar {prefijo}mes (1 a 12) o -1 para volver al menu principal: "
+        ).strip()
+        if volver_al_menu(mes_input):
+            return None
+        mes = convertir_entero(mes_input) if mes_input.isdigit() else None
+        if mes is not None and Salas.mes_consultable(
+            anio, mes, fecha_hoy, fecha_maxima
+        ):
+            break
+        print(
+            f"No se puede reservar en meses o años anteriores. El mes debe estar "
+            f"dentro del periodo {fecha_hoy:%d/%m/%Y} "
+            f"a {fecha_maxima:%d/%m/%Y}."
+        )
+
+    while True:
+        dia_input = input(
+            f"Ingresar {prefijo}dia o -1 para volver al menu principal: "
+        ).strip()
+        if volver_al_menu(dia_input):
+            return None
+        dia = convertir_entero(dia_input) if dia_input.isdigit() else None
+        try:
+            fecha = datetime.date(anio, mes, dia)
+        except (TypeError, ValueError):
+            fecha = None
+        if fecha is not None and fecha_hoy <= fecha <= fecha_maxima:
+            return fecha.strftime("%d/%m/%Y")
+        print(
+            f"La fecha debe ser valida y estar entre {fecha_hoy:%d/%m/%Y} "
+            f"y {fecha_maxima:%d/%m/%Y}; no se permiten fechas pasadas."
+        )
 
 
 def pedir_opcion(mensaje, opciones_validos):
@@ -197,37 +269,9 @@ def realizar_Reserva(matriz, id_usuario=0):
         return
     id_sala = int(opcion_sala)
 
-    while True:
-        anio_input = input("Ingresar año (2026 o 2027) o -1 para volver al menu principal: ").strip()
-        if volver_al_menu(anio_input):
-            return
-        if anio_input.isdigit():
-            anio = convertir_entero(anio_input)
-            if anio is not None and anio in (2026, 2027):
-                break
-        print("El año debe ser 2026 o 2027.")
-
-    while True:
-        mes_input = input("Ingresar mes (1 a 12) o -1 para volver al menu principal: ").strip()
-        if volver_al_menu(mes_input):
-            return
-        if mes_input.isdigit():
-            mes = convertir_entero(mes_input)
-            if mes is not None and 1 <= mes <= 12:
-                break
-        print("El mes debe estar entre 1 y 12.")
-
-    while True:
-        dia_input = input("Ingresar dia o -1 para volver al menu principal: ").strip()
-        if volver_al_menu(dia_input):
-            return
-        if dia_input.isdigit():
-            dia = convertir_entero(dia_input)
-            if dia is not None:
-                max_dia = obtener_dias_del_mes(mes)
-                if 1 <= dia <= max_dia:
-                    break
-        print(f"El dia debe estar entre 1 y {obtener_dias_del_mes(mes)} para ese mes.")
+    fecha = pedir_fecha_reserva()
+    if fecha is None:
+        return
 
     while True:
         hora_input = input("Ingresar hora de inicio (entre 9 y 16, formato 24hs) o -1 para volver al menu principal: ").strip()
@@ -240,7 +284,6 @@ def realizar_Reserva(matriz, id_usuario=0):
         print("La hora debe estar entre 9 y 16 para reservar bloques de 2 horas.")
 
     hora_fin = hora + 2
-    fecha = f"{dia:02d}/{mes:02d}/{anio}"
     inicio = f"{hora:02d}:00"
     fin = f"{hora_fin:02d}:00"
 
@@ -357,37 +400,9 @@ def modificar_Reserva(matriz, usuario=None):
         return
     nuevo_sala = int(nuevo_sala_input)
 
-    while True:
-        anio_input = input("Ingresar nuevo año (2026 o 2027) o -1 para volver al menu principal: ").strip()
-        if volver_al_menu(anio_input):
-            return
-        if anio_input.isdigit():
-            anio = convertir_entero(anio_input)
-            if anio is not None and anio in (2026, 2027):
-                break
-        print("El año debe ser 2026 o 2027.")
-
-    while True:
-        mes_input = input("Ingresar nuevo mes (1 a 12) o -1 para volver al menu principal: ").strip()
-        if volver_al_menu(mes_input):
-            return
-        if mes_input.isdigit():
-            mes = convertir_entero(mes_input)
-            if mes is not None and 1 <= mes <= 12:
-                break
-        print("El mes debe estar entre 1 y 12.")
-
-    while True:
-        dia_input = input("Ingresar nuevo dia o -1 para volver al menu principal: ").strip()
-        if volver_al_menu(dia_input):
-            return
-        if dia_input.isdigit():
-            dia = convertir_entero(dia_input)
-            if dia is not None:
-                max_dia = obtener_dias_del_mes(mes)
-                if 1 <= dia <= max_dia:
-                    break
-        print(f"El dia debe estar entre 1 y {obtener_dias_del_mes(mes)} para ese mes.")
+    nueva_fecha = pedir_fecha_reserva("nuevo")
+    if nueva_fecha is None:
+        return
 
     while True:
         hora_input = input("Ingresar nueva hora de inicio (formato 24hs) o -1 para volver al menu principal: ").strip()
@@ -399,7 +414,6 @@ def modificar_Reserva(matriz, usuario=None):
                 break
         print("La hora debe estar entre 9 y 16 para reservar bloques de 2 horas.")
 
-    nueva_fecha = f"{dia:02d}/{mes:02d}/{anio}"
     nuevo_inicio = f"{hora:02d}:00"
     if hay_conflicto_reserva_usuario(matriz, usuario, nueva_fecha, nuevo_inicio, reserva_encontrada):
         print("No puedes reservar en un dia y horario que ya habias reservado antes.")
