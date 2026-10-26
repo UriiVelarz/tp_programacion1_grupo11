@@ -1,20 +1,20 @@
 import re
-
+import datetime 
 from Reservas import reservas
 
 salas = [
-    [1, "Sala A", "Primer  Piso", 2],
-    [2, "Sala B", "Primer  Piso", 2],
-    [3, "Sala C", "Primer  Piso", 4],
-    [4, "Sala A", "Segundo Piso", 2],
-    [5, "Sala B", "Segundo Piso", 2],
-    [6, "Sala C", "Segundo Piso", 4]
+    [1, "Sala A", "Primer  Piso", 2, 1],
+    [2, "Sala B", "Primer  Piso", 2, 2],
+    [3, "Sala C", "Primer  Piso", 4, 3],
+    [4, "Sala A", "Segundo Piso", 2, 1],
+    [5, "Sala B", "Segundo Piso", 2, 2],
+    [6, "Sala C", "Segundo Piso", 4, 3]
 ]
 
 TIPOS_SALA = {
-    1: {"nombre": "Pequeña", "cantidad": 2},
-    2: {"nombre": "Mediana", "cantidad": 2},
-    3: {"nombre": "Grande", "cantidad": 2},
+    1: {"nombre": "Pequeña", "cantidad": 0},
+    2: {"nombre": "Mediana", "cantidad": 0},
+    3: {"nombre": "Grande", "cantidad": 0},
 }
 
 dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
@@ -61,6 +61,33 @@ def formatear_celda(texto, ancho):
     return texto + (" " * espacios)
 
 
+def tipo_sala(sala):
+    if len(sala) > 4 and sala[4] in TIPOS_SALA:
+        return sala[4]
+    nombre = sala[1].strip().casefold()
+    if nombre.endswith("a"):
+        return 1
+    if nombre.endswith("b"):
+        return 2
+    if nombre.endswith("c"):
+        return 3
+    return None
+
+
+def cantidad_salas_tipo(tipo, matriz=None):
+    matriz = salas if matriz is None else matriz
+    return sum(1 for sala in matriz if tipo_sala(sala) == tipo)
+
+
+def actualizar_cantidad_tipos(matriz=None):
+    matriz = salas if matriz is None else matriz
+    for tipo in TIPOS_SALA:
+        TIPOS_SALA[tipo]["cantidad"] = cantidad_salas_tipo(tipo, matriz)
+
+
+actualizar_cantidad_tipos()
+
+
 matriz_disponibilidad = [
     [1, 1, 0, 1, 1, 0, 1],
     [0, 1, 1, 1, 0, 1, 1],
@@ -80,30 +107,40 @@ def mostrar_matriz():
     print("-" * len(encabezado))
 
     for i in range(len(salas)):
-        id_sala, nombre, piso, capacidad = salas[i]
+        _, nombre, piso, _ = salas[i][:4]
         etiqueta = f"{nombre}({piso})"
-        fila = f"{etiqueta:<25}" + "".join(f"{matriz_disponibilidad[i][j]:<11}" for j in range(len(dias)))
+        disponibilidad = matriz_disponibilidad[i % len(matriz_disponibilidad)]
+        fila = f"{etiqueta:<25}" + "".join(f"{disponibilidad[j]:<11}" for j in range(len(dias)))
         print(fila)
     print("\nAclaracion: 1 = disponible, 0 = ocupado")
 
 
-def consultar_disponibilidad(sala, dia):
-    if sala < 1 or sala > len(salas):
-        return "La sala ingresada no existe."
-    if dia < 1 or dia > len(dias):
-        return "El dia ingresado no existe."
-
-    disponible = matriz_disponibilidad[sala - 1][dia - 1]
-    nombre_sala = salas[sala - 1][1]
-
-    if disponible == 1:
-        return f"La {nombre_sala} esta disponible el dia {dias[dia - 1]}."
-    return f"La {nombre_sala} no esta disponible el dia {dias[dia - 1]}."
+def fecha_maxima_consulta(fecha_actual=None):
+    fecha_actual = fecha_actual or datetime.date.today()
+    mes = fecha_actual.month + 6
+    anio = fecha_actual.year + (mes - 1) // 12
+    mes = (mes - 1) % 12 + 1
+    ultimo_dia = obtener_dias_mes(mes)
+    dia = min(fecha_actual.day, ultimo_dia)
+    return datetime.date(anio, mes, dia)
 
 
 def obtener_dias_mes(mes):
     dias_por_mes = {1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31}
     return dias_por_mes.get(mes, 0)
+
+
+def mes_consultable(anio, mes, fecha_hoy=None, fecha_maxima=None):
+    fecha_hoy = fecha_hoy or datetime.date.today()
+    fecha_maxima = fecha_maxima or fecha_maxima_consulta(fecha_hoy)
+    if anio < 1 or not 1 <= mes <= 12:
+        return False
+    try:
+        inicio_mes = datetime.date(anio, mes, 1)
+        fin_mes = datetime.date(anio, mes, obtener_dias_mes(mes))
+    except ValueError:
+        return False
+    return inicio_mes <= fecha_maxima and fin_mes >= fecha_hoy
 
 
 def contar_reservas_por_tamanio(anio, mes, dia, tamaño):
@@ -112,13 +149,13 @@ def contar_reservas_por_tamanio(anio, mes, dia, tamaño):
     for reserva in reservas:
         if reserva[3] == fecha and reserva[1] == tamaño:
             cantidad += 1
-    return cantidad, TIPOS_SALA[tamaño]["cantidad"]
+    return cantidad, cantidad_salas_tipo(tamaño)
 
 
 def estado_horario(anio, mes, dia, tamaño, hora_inicio):
     fecha = f"{dia:02d}/{mes:02d}/{anio}"
     hora_fin = hora_inicio + 2
-    capacidad = TIPOS_SALA[tamaño]["cantidad"]
+    capacidad = cantidad_salas_tipo(tamaño)
     conflictos = 0
 
     for reserva in reservas:
@@ -133,81 +170,101 @@ def estado_horario(anio, mes, dia, tamaño, hora_inicio):
         if not (bloque_actual[1] <= bloque_reserva[0] or bloque_actual[0] >= bloque_reserva[1]):
             conflictos += 1
 
-    if conflictos == 0:
-        color = COLOR_VERDE
-        estado = f"Libre {conflictos}/{capacidad}"
-    elif conflictos < capacidad:
-        color = COLOR_AMARILLO
-        estado = f"Parcial {conflictos}/{capacidad}"
-    else:
+    if capacidad == 0 or conflictos >= capacidad:
         color = COLOR_ROJO
         estado = f"Ocupada {conflictos}/{capacidad}"
+    elif conflictos == 0:
+        color = COLOR_VERDE
+        estado = f"Libre {conflictos}/{capacidad}"
+    else:
+        color = COLOR_AMARILLO
+        estado = f"Parcial {conflictos}/{capacidad}"
 
     return f"{color}{estado}{COLOR_RESET}"
 
 
 def consultar_disponibilidad_mensual():
+    fecha_hoy = datetime.date.today()
+    fecha_maxima = fecha_maxima_consulta(fecha_hoy)
+
     while True:
-        anio_input = input("Ingrese el año (2026 o 2027) o -1 para volver: ").strip()
+        anio_input = input(
+            f"Ingrese el año ({fecha_hoy.year} a {fecha_maxima.year}) o -1 para volver: "
+        ).strip()
         if anio_input == "-1":
             return
         if anio_input.isdigit():
             anio = convertir_entero(anio_input)
-            if anio is not None and anio in (2026, 2027):
+            if anio is not None and fecha_hoy.year <= anio <= fecha_maxima.year:
                 break
-        print("El año debe ser 2026 o 2027.")
+        print(
+            f"Mes fuera de rango. El periodo disponible va desde "
+            f"{fecha_hoy:%d/%m/%Y} hasta {fecha_maxima:%d/%m/%Y}. Ingrese el año nuevamente."
+        )
 
     while True:
-        mes_input = input("Ingrese el mes (1 a 12) o -1 para volver: ").strip()
+        mes_input = input(
+            f"Ingrese el mes del año {anio} dentro del periodo disponible "
+            f"({fecha_hoy:%m/%Y} a {fecha_maxima:%m/%Y}) o -1 para volver: "
+        ).strip()
         if mes_input == "-1":
             return
         if mes_input.isdigit():
             mes = convertir_entero(mes_input)
-            if mes is not None and 1 <= mes <= 12:
+            if mes is not None and mes_consultable(
+                anio, mes, fecha_hoy, fecha_maxima
+            ):
                 break
-        print("El mes debe estar entre 1 y 12.")
-
-    dias_del_mes = obtener_dias_mes(mes)
+        print(
+            f"Mes fuera de rango. Para el año {anio}, elija un mes entre "
+            f"{fecha_hoy:%m/%Y} y {fecha_maxima:%m/%Y}."
+        )
 
     while True:
-        dia_inicio_input = input(f"Ingrese el dia de inicio (1 a {dias_del_mes}) o -1 para volver: ").strip()
+        dia_inicio_input = input("Ingrese el dia de inicio (o -1 para volver): ").strip()
         if dia_inicio_input == "-1":
             return
         if dia_inicio_input.isdigit():
             dia_inicio = convertir_entero(dia_inicio_input)
-            if dia_inicio is not None and 1 <= dia_inicio <= dias_del_mes:
+            try:
+                fecha_inicio = datetime.date(anio, mes, dia_inicio)
+            except (TypeError, ValueError):
+                fecha_inicio = None
+            if (
+                fecha_inicio is not None
+                and fecha_hoy <= fecha_inicio <= fecha_maxima
+            ):
                 break
-        print(f"El dia debe estar entre 1 y {dias_del_mes}.")
+        print("El dia debe ser valido y estar dentro de los proximos 6 meses.")
 
     while True:
-        cantidad_dias_input = input("Ingrese la cantidad de dias a imprimir (maximo 30): ").strip()
+        max_dias = min(30, (fecha_maxima - fecha_inicio).days + 1)
+        cantidad_dias_input = input(
+            f"Ingrese la cantidad de dias a imprimir (maximo {max_dias}): "
+        ).strip()
         if cantidad_dias_input.isdigit():
             cantidad_dias = convertir_entero(cantidad_dias_input)
-            if cantidad_dias is not None and 1 <= cantidad_dias <= 30:
+            if cantidad_dias is not None and 1 <= cantidad_dias <= max_dias:
                 break
-        print("La cantidad de dias debe estar entre 1 y 30.")
+        print(f"La cantidad de dias debe estar entre 1 y {max_dias}.")
 
-    fechas = []
-    anio_actual = anio
-    mes_actual = mes
-    dia_actual = dia_inicio
-
-    for _ in range(cantidad_dias):
-        while dia_actual > obtener_dias_mes(mes_actual):
-            dia_actual = 1
-            mes_actual += 1
-            if mes_actual > 12:
-                mes_actual = 1
-                anio_actual += 1
-
-        fechas.append((anio_actual, mes_actual, dia_actual))
-        dia_actual += 1
+    fechas = [
+        fecha_inicio + datetime.timedelta(days=desplazamiento)
+        for desplazamiento in range(cantidad_dias)
+    ]
 
     print(f"\n{'Disponibilidad mensual - ' + str(mes) + '/' + str(anio):^120}")
-    print(f"{'Total de salas: 2 pequeñas, 2 medianas y 2 grandes':^120}")
+    actualizar_cantidad_tipos()
+    plurales = {1: "pequeñas", 2: "medianas", 3: "grandes"}
+    detalle_salas = ", ".join(
+        f"{datos['cantidad']} {plurales[tipo]}"
+        for tipo, datos in TIPOS_SALA.items()
+    )
+    print(f"{('Total de salas: ' + detalle_salas):^120}")
     print("=" * 120)
 
-    for anio_actual, mes_actual, dia_actual in fechas:
+    for fecha in fechas:
+        anio_actual, mes_actual, dia_actual = fecha.year, fecha.month, fecha.day
         print(f"\n=== Dia {dia_actual:02d}/{mes_actual:02d}/{anio_actual} ===")
         print(f"{'Horario':<15} | {'Pequeña':^10} | {'Mediana':^10} | {'Grande':^10}")
         print("-" * 62)
@@ -226,7 +283,7 @@ def consultar_disponibilidad_mensual():
 
         print("-" * 62)
 
-    print(f"\n{COLOR_VERDE}Libre 0/2{COLOR_RESET}   {COLOR_AMARILLO}Parcial 1/2{COLOR_RESET}   {COLOR_ROJO}Ocupada 2/2{COLOR_RESET}")
+    print(f"\n{COLOR_VERDE}Libre{COLOR_RESET}   {COLOR_AMARILLO}Parcial{COLOR_RESET}   {COLOR_ROJO}Ocupada{COLOR_RESET}")
     print("Los horarios validos para reservar son desde 09:00 hasta 16:00, con reservas de 2 horas.")
 
 
@@ -239,7 +296,7 @@ def imprimir_Salas(matriz):
     print("=" * 55)
     print(f"{'Salas':42}")
     print("=" * 55)
-    print(f"{'Id_Sala':<10}{'Nombre':<10}{'Ubicacion':<15}{'capacidad':<14}")
+    print(f"{'Id_Sala':<10}{'Nombre':<10}{'Ubicacion':<15}{'capacidad':<14}{'Tipo':<14}")
     print("-" * 55)
 
     for i in range(len(matriz)):
@@ -247,7 +304,9 @@ def imprimir_Salas(matriz):
         nombre_sala = matriz[i][1]
         ubicacion = matriz[i][2]
         capacidad = matriz[i][3]
-        print(f"{id_sala:<10}{nombre_sala:<10}{ubicacion:15}{capacidad:<14}")
+        tipo = tipo_sala(matriz[i])
+        nombre_tipo = TIPOS_SALA[tipo]["nombre"] if tipo in TIPOS_SALA else "Sin tipo"
+        print(f"{id_sala:<10}{nombre_sala:<10}{ubicacion:15}{capacidad:<14}{nombre_tipo:<14}")
 
 
 def agregar_Sala(matriz):
@@ -290,6 +349,20 @@ def agregar_Sala(matriz):
         print("La ubicacion solo puede contener letras, numeros, espacios y guiones.")
 
     while True:
+        print("Tipo de sala:")
+        for tipo, datos in TIPOS_SALA.items():
+            print(f"{tipo}. {datos['nombre']}")
+        tipo_input = input(
+            "Ingresar tipo de sala o -1 para volver al menu principal: "
+        ).strip()
+        if tipo_input == "-1":
+            return
+        tipo = convertir_entero(tipo_input)
+        if tipo in TIPOS_SALA:
+            break
+        print("Debe seleccionar un tipo de sala valido.")
+
+    while True:
         capacidad_input = input("Ingresar capacidad o -1 para volver al menu principal: ").strip()
         if capacidad_input == "-1":
             return
@@ -301,8 +374,9 @@ def agregar_Sala(matriz):
             break
         print("La capacidad debe ser un numero entero positivo.")
 
-    nuevaSala = [id_sala, nombre_sala, ubicacion, capacidad]
+    nuevaSala = [id_sala, nombre_sala, ubicacion, capacidad, tipo]
     matriz.append(nuevaSala)
+    actualizar_cantidad_tipos(matriz)
     print("Sala agregada correctamente")
 
 
@@ -327,6 +401,7 @@ def eliminar_Sala(matriz):
         for sala in matriz:
             if sala[0] == id_sala:
                 matriz.remove(sala)
+                actualizar_cantidad_tipos(matriz)
                 print("Sala eliminado correctamente")
                 return
         print("No se encontro el id de Sala")
