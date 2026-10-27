@@ -56,11 +56,13 @@ def total_reservas(reservas):
 
 
 def reservas_por_tipo_sala(reservas):
-    conteo = {}
-    for reserva in reservas:
-        tipo = reserva[1]
+    if not reservas:
+        return {}
+    else:
+        tipo = reservas[0][1]
+        conteo = reservas_por_tipo_sala(reservas[1:])
         conteo[tipo] = conteo.get(tipo, 0) + 1
-    return conteo
+        return conteo
 
 
 def reservas_por_usuario(reservas):
@@ -72,18 +74,31 @@ def reservas_por_usuario(reservas):
 
 
 def dias_con_reservas(reservas):
-    fechas = []
-    for reserva in reservas:
-        if reserva[3] not in fechas:
-            fechas.append(reserva[3])
+    if len(reservas) == 0:
+        return[]
+
+    fecha  = reservas[0][3]
+    fechas = dias_con_reservas(reservas[1:])
+
+    if fecha not in fechas:
+        fechas.append(fecha)
+
     return fechas
+
+
+def contar_dias_recursivo(fechas):
+    if len(fechas) == 0:
+        return 0
+
+    return 1 + contar_dias_recursivo(fechas[1:])
 
 
 def promedio_diario(reservas):
     fechas = dias_con_reservas(reservas)
     if len(fechas) == 0:
         return 0
-    return total_reservas(reservas) / len(fechas)
+
+    return total_reservas(reservas) / contar_dias_recursivo(fechas)
 
 
 def promedio_por_sala(reservas, salas):
@@ -279,10 +294,18 @@ def menu_estadisticas(reservas=None, salas=None, usuarios=None):
         usuarios = Usuarios.usuarios
 
     while True:
-        print("\n=== Reportes estadisticos ===")
+        print(f"\n=== Reportes estadisticos ===")
         print("1. Resumen general")
         print("2. Resumen por periodo")
-        print("3. Volver")
+        print("3. Total de reservas")
+        print("4. Reservas por tipo de sala")
+        print("5. Porcentaje por tipo de sala")
+        print("6. Reservas por usuario")
+        print("7. Dias con reservas")
+        print("8. Promedio diario de reservas")
+        print("9. Promedio de reservas por sala")
+        print("10. Categorias con mas y menos reservas")
+        print("0. Volver")
         opcion = input("Seleccione una opcion: ").strip()
 
         if opcion == "1":
@@ -291,10 +314,73 @@ def menu_estadisticas(reservas=None, salas=None, usuarios=None):
         elif opcion == "2":
             periodo = pedir_periodo()
             if periodo is not None:
-                fecha_desde, fecha_hasta = periodo
-                mostrar_resumen(reservas, salas, usuarios, fecha_desde, fecha_hasta)
+                desde, hasta = periodo
+                mostrar_resumen(reservas, salas, usuarios, desde, hasta)
 
         elif opcion == "3":
+            print("Total de reservas:", total_reservas(reservas))
+
+        elif opcion == "4":
+            conteo = reservas_por_tipo_sala(reservas)
+
+            print(f"\nReservas por tipo de sala:")
+            for tipo, datos in Salas.TIPOS_SALA.items():
+                print(f"{datos['nombre']}: " f"{conteo.get(tipo, 0)} reservas")
+
+        elif opcion == "5":
+            porcentajes = porcentaje_por_tipo_sala(reservas)
+
+            print(f"\nPorcentaje de reservas por tipo de sala:")
+            for tipo, datos in Salas.TIPOS_SALA.items():
+                print(f"{datos['nombre']}: " f"{porcentajes[tipo]:.2f}%")
+
+        elif opcion == "6":
+            conteo = reservas_por_usuario(reservas)
+
+            if not conteo:
+                print("No hay reservas registradas.")
+            else:
+                ranking = sorted(conteo.items(), key=lambda par: par[1], reverse=True)
+
+                print(f"\nReservas por usuario:")
+                for id_usuario, cantidad in ranking:
+                    nombre = nombre_usuario(usuarios, id_usuario)
+                    print(f"{nombre}: {cantidad} reservas")
+
+        elif opcion == "7":
+            fechas = dias_con_reservas(reservas)
+
+            print("\nDias con reservas:")
+            if fechas:
+                for fecha in fechas:
+                    print(fecha)
+                print(f"Total de dias: {len(fechas)}")
+            else:
+                print("No hay dias con reservas.")
+
+        elif opcion == "8":
+            print("Promedio diario de reservas: " f"{promedio_diario(reservas):.2f}")
+
+        elif opcion == "9":
+            print("Promedio de reservas por sala: " f"{promedio_por_sala(reservas, salas):.2f}")
+
+        elif opcion == "10":
+            conteo_tipos = reservas_por_tipo_sala(reservas)
+
+            conteo_completo = {
+                tipo: conteo_tipos.get(tipo, 0)
+                for tipo in Salas.TIPOS_SALA
+            }
+
+            if total_reservas(reservas) == 0:
+                print("No hay reservas para analizar.")
+            else:
+                (tipos_max, maximo, tipos_min, minimo) = extremos_por_categoria(conteo_completo)
+
+                print("Tipo(s) con mas reservas: " f"{unir_tipos(tipos_max)} -> {maximo}")
+                print("Tipo(s) con menos reservas: " f"{unir_tipos(tipos_min)} -> {minimo}")
+
+        elif opcion == "0":
             return
 
         else:

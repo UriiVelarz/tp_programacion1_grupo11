@@ -1,6 +1,6 @@
 {
 "_ultimo_id_asignado": 8,
-"1": {"nombre": "Admin", "edad": null, "mail": "", "telefono": "", "contrasena": "", "rol": "administrador"},
+"1": {"nombre": "Admin", "edad": null, "mail": "", "telefono": "", "contrasena": "contrasena", "rol": "administrador"},
 "2": {"nombre": "Facundo", "edad": 27, "mail": "facu@hotmail.com", "telefono": "+54 9 1159993061", "contrasena": "", "rol": "cliente"},
 "3": {"nombre": "Tomas", "edad": 21, "mail": "tomi@hotmail.com", "telefono": "+54 9 1158682965", "contrasena": "", "rol": "cliente"},
 "4": {"nombre": "Agustin", "edad": 20, "mail": "agus@hotmail.com", "telefono": "+54 9 1154683065", "contrasena": "", "rol": "cliente"},
