@@ -1,0 +1,7 @@
+id_sala;nombre;capacidad
+1;Sala pequeña A;2
+2;Sala pequeña B;2
+3;Sala mediana A;7
+4;Sala mediana B;7
+5;Sala grande A;12
+6;Sala grande B;12
