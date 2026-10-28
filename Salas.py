@@ -385,7 +385,8 @@ def agregar_Sala(matriz):
         if id_sala is None:
             print("El Id debe ser un numero entero positivo.")
             continue
-        if any(sala[0] == id_sala for sala in matriz):
+        ids_existentes = {sala[0] for sala in matriz}
+        if id_sala in ids_existentes:
             print("Ese Id de sala ya existe.")
             continue
         break
@@ -492,7 +493,8 @@ def modificar_Sala(matriz):
         if nuevo_id is None:
             print("El Id debe ser un numero entero positivo.")
             continue
-        if any(fila is not fila_encontrada and fila[0] == nuevo_id for fila in matriz):
+        ids_otras_salas = {fila[0] for fila in matriz if fila is not fila_encontrada}
+        if nuevo_id in ids_otras_salas:
             print("Ese Id de sala ya existe.")
             continue
         break
