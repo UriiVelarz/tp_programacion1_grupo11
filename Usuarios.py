@@ -207,12 +207,12 @@ def siguiente_id_usuario():
 
 
 def _usuario_repetido(nombre, matriz_usuarios, excluir_id=None):
-    nombre_normalizado = normalizar_usuario(nombre).casefold()
-    return any(
-        id_usuario != excluir_id
-        and normalizar_usuario(usuario.get("nombre")).casefold() == nombre_normalizado
+    nombres_registrados = {
+        normalizar_usuario(usuario.get("nombre")).casefold()
         for id_usuario, usuario in matriz_usuarios.items()
-    )
+        if id_usuario != excluir_id
+    }
+    return normalizar_usuario(nombre).casefold() in nombres_registrados
 
 
 def solicitar_datos_personales():
