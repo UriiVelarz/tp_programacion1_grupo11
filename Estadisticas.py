@@ -1,3 +1,4 @@
+import datetime
 from functools import reduce
 
 import Reservas
@@ -201,8 +202,8 @@ def mostrar_resumen(reservas, salas, usuarios, fecha_desde=None, fecha_hasta=Non
         return
 
     conteo_tipos = reservas_por_tipo_sala(filtradas)
+    conteo_tipos_totales = reservas_por_tipo_sala(reservas)
     conteo_usuarios = reservas_por_usuario(filtradas)
-    porcentajes = porcentaje_por_tipo_sala(filtradas)
 
     conteo_tipos_completo = {}
     for tipo in Salas.TIPOS_SALA:
@@ -217,13 +218,19 @@ def mostrar_resumen(reservas, salas, usuarios, fecha_desde=None, fecha_hasta=Non
     print(f"Promedio de reservas por sala ({len(salas)} salas): {promedio_por_sala(filtradas, salas):.2f}")
 
     print("-" * 70)
-    print(f"{'Tipo de sala':<18}{'Salas':<10}{'Reservas':<12}{'% del total':<14}")
+    print(
+        f"{'Tipo de sala':<18}{'Salas':<10}"
+        f"{'Reservas actuales':<20}{'Reservas totales':<18}"
+    )
     print("-" * 70)
 
     for tipo, datos in Salas.TIPOS_SALA.items():
-        cantidad = conteo_tipos.get(tipo, 0)
-        porcentaje = porcentajes[tipo]
-        print(f"{datos['nombre']:<18}{datos['cantidad']:<10}{cantidad:<12}{porcentaje:>6.2f}%")
+        cantidad_actual = conteo_tipos.get(tipo, 0)
+        cantidad_total = conteo_tipos_totales.get(tipo, 0)
+        print(
+            f"{datos['nombre']:<18}{datos['cantidad']:<10}"
+            f"{cantidad_actual:<20}{cantidad_total:<18}"
+        )
 
     print("-" * 70)
     print(f"Tipo de sala con mas reservas: {unir_tipos(tipo_max)} -> {cant_max}")
@@ -254,6 +261,10 @@ def pedir_fecha(mensaje):
             return ""
         fecha = validar_fecha(texto)
         if fecha is not None:
+            dia, mes, anio = map(int, fecha.split("/"))
+            if datetime.date(anio, mes, dia) > datetime.date.today():
+                print("No se permiten fechas futuras. Intente nuevamente.")
+                continue
             return fecha
         print("Fecha invalida. Usa el formato dd/mm/aaaa con año 2026 o 2027 (ej. 15/09/2026).")
 

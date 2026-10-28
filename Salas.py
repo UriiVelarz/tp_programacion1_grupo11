@@ -50,6 +50,8 @@ def formatear_celda(texto, ancho):
 
 
 def tipo_sala(sala):
+    if len(sala) > 3 and sala[3] in TIPOS_SALA:
+        return sala[3]
     return ((sala[0] - 1) // 2) % len(TIPOS_SALA) + 1
 
 
@@ -87,13 +89,18 @@ def _cargar_salas():
         with open(ARCHIVO_SALAS, "r", encoding="utf-8", newline="") as archivo:
             lector = csv.reader(archivo, delimiter=";")
             encabezado = next(lector, None)
-            if encabezado != ["id_sala", "nombre", "capacidad"]:
+            if encabezado not in (
+                ["id_sala", "nombre", "capacidad"],
+                ["id_sala", "nombre", "capacidad", "tipo"],
+            ):
                 raise ValueError("El encabezado del archivo de salas no es valido.")
             for numero_linea, fila in enumerate(lector, start=2):
-                if len(fila) != 3:
+                if len(fila) != len(encabezado):
                     raise ValueError(f"Formato invalido en la linea {numero_linea}.")
                 id_sala, capacidad = int(fila[0]), int(fila[2])
-                tipo = tipo_sala([id_sala])
+                tipo = int(fila[3]) if len(fila) == 4 else tipo_sala([id_sala])
+                if tipo not in TIPOS_SALA:
+                    raise ValueError(f"Tipo de sala invalido en la linea {numero_linea}.")
                 if id_sala < 1 or not capacidad_valida(tipo, capacidad):
                     raise ValueError(f"Datos invalidos en la linea {numero_linea}.")
                 salas_cargadas.append(
@@ -118,8 +125,8 @@ def _guardar_salas(matriz):
     try:
         with open(ARCHIVO_TEMPORAL_SALAS, "w", encoding="utf-8", newline="") as archivo:
             escritor = csv.writer(archivo, delimiter=";")
-            escritor.writerow(["id_sala", "nombre", "capacidad"])
-            escritor.writerows(sala[:3] for sala in matriz)
+            escritor.writerow(["id_sala", "nombre", "capacidad", "tipo"])
+            escritor.writerows(sala[:3] + [tipo_sala(sala)] for sala in matriz)
         os.replace(ARCHIVO_TEMPORAL_SALAS, ARCHIVO_SALAS)
     except (OSError, csv.Error, TypeError, ValueError) as error:
         try:
@@ -375,49 +382,19 @@ def agregar_Sala(matriz):
          agrega la sala con el nombre que corresponde a su posicion y muestra un mensaje de exito.
     '''
     while True:
-        id_input = input("Ingresar Id de sala o -1 para volver al menu principal: ").strip()
-        if id_input == "-1":
+        print("Seleccione el tipo de sala:")
+        for tipo, datos_tipo in TIPOS_SALA.items():
+            print(f"{tipo}. {datos_tipo['nombre']}")
+        tipo_input = input("Ingresar opcion o -1 para volver al menu principal: ").strip()
+        if tipo_input == "-1":
             return
-        if not validar_id_sala(id_input):
-            print("El Id debe ser un numero entero positivo.")
-            continue
-        id_sala = convertir_entero(id_input)
-        if id_sala is None:
-            print("El Id debe ser un numero entero positivo.")
-            continue
-        ids_existentes = {sala[0] for sala in matriz}
-        if id_sala in ids_existentes:
-            print("Ese Id de sala ya existe.")
-            continue
-        break
-
-    tipo = ((id_sala - 1) // 2) % len(TIPOS_SALA) + 1
-    print(f"Categoria asignada por ID: {TIPOS_SALA[tipo]['nombre']}")
-
-    while True:
-        capacidad_input = input("Ingresar capacidad o -1 para volver al menu principal: ").strip()
-        if capacidad_input == "-1":
-            return
-        if validar_capacidad(capacidad_input):
-            capacidad = convertir_entero(capacidad_input)
-            if capacidad is None:
-                print("La capacidad debe ser un numero entero positivo.")
-                continue
-            if not capacidad_valida(tipo, capacidad):
-                datos_tipo = TIPOS_SALA[tipo]
-                print(
-                    f"La capacidad para salas {datos_tipo['nombre'].lower()} "
-                    f"debe estar entre {datos_tipo['capacidad_minima']} "
-                    f"y {datos_tipo['capacidad_maxima']} personas."
-                )
-                continue
+        tipo = convertir_entero(tipo_input)
+        if tipo in TIPOS_SALA:
             break
-        datos_tipo = TIPOS_SALA[tipo]
-        print(
-            f"La capacidad debe ser un numero entre {datos_tipo['capacidad_minima']} "
-            f"y {datos_tipo['capacidad_maxima']}."
-        )
+        print("Opcion invalida. Seleccione 1, 2 o 3.")
 
+    id_sala = max((sala[0] for sala in matriz), default=0) + 1
+    capacidad = TIPOS_SALA[tipo]["capacidad_maxima"]
     nuevaSala = [id_sala, "", capacidad, tipo]
     matriz.append(nuevaSala)
     _actualizar_nombres_salas(matriz)
@@ -482,24 +459,7 @@ def modificar_Sala(matriz):
             break
         print("Sala no encontrada. Intente nuevamente.")
 
-    while True:
-        nuevo_id_input = input("Ingresar nuevo id de sala o -1 para volver al menu principal: ").strip()
-        if nuevo_id_input == "-1":
-            return
-        if not validar_id_sala(nuevo_id_input):
-            print("El Id debe ser un numero entero positivo.")
-            continue
-        nuevo_id = convertir_entero(nuevo_id_input)
-        if nuevo_id is None:
-            print("El Id debe ser un numero entero positivo.")
-            continue
-        ids_otras_salas = {fila[0] for fila in matriz if fila is not fila_encontrada}
-        if nuevo_id in ids_otras_salas:
-            print("Ese Id de sala ya existe.")
-            continue
-        break
-
-    nuevo_tipo = tipo_sala([nuevo_id])
+    nuevo_tipo = tipo_sala(fila_encontrada)
     datos_tipo = TIPOS_SALA[nuevo_tipo]
     while True:
         capacidad_input = input(
@@ -515,7 +475,6 @@ def modificar_Sala(matriz):
             f"La capacidad para salas {datos_tipo['nombre'].lower()} debe estar entre "
             f"{datos_tipo['capacidad_minima']} y {datos_tipo['capacidad_maxima']} personas."
         )
-    fila_encontrada[0] = nuevo_id
     fila_encontrada[2] = capacidad
     _actualizar_nombres_salas(matriz)
     actualizar_cantidad_tipos(matriz)
