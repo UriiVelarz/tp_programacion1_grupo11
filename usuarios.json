@@ -1,9 +1,9 @@
 {
 "_ultimo_id_asignado": 8,
 "1": {"nombre": "Admin", "edad": null, "mail": "", "telefono": "", "contrasena": "contrasena", "rol": "administrador"},
-"2": {"nombre": "Facundo", "edad": 27, "mail": "facu@hotmail.com", "telefono": "+54 9 1159993061", "contrasena": "", "rol": "cliente"},
+"2": {"nombre": "Facundo", "edad": 27, "mail": "facu@hotmail.com", "telefono": "+54 9 1159993061", "contrasena": "Agua", "rol": "cliente"},
 "3": {"nombre": "Tomas", "edad": 21, "mail": "tomi@hotmail.com", "telefono": "+54 9 1158682965", "contrasena": "", "rol": "cliente"},
-"4": {"nombre": "Agustin", "edad": 20, "mail": "agus@hotmail.com", "telefono": "+54 9 1154683065", "contrasena": "", "rol": "cliente"},
+"4": {"nombre": "Agustin", "edad": 20, "mail": "agus@hotmail.com", "telefono": "+54 9 1154683065", "contrasena": "Aura", "rol": "administrador"},
 "5": {"nombre": "Uriel", "edad": 19, "mail": "uri@hotmail.com", "telefono": "+54 9 1154183061", "contrasena": "", "rol": "cliente"},
 "6": {"nombre": "Clara", "edad": 34, "mail": "Clara@gmail.com", "telefono": "+54 9 11 34567890", "contrasena": "", "rol": "cliente"},
 "7": {"nombre": "Federico", "edad": 50, "mail": "Federico@hotmail.com", "telefono": "+54 9 11 12345678", "contrasena": "", "rol": "cliente"},

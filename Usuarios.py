@@ -60,110 +60,75 @@ def _cargar_usuarios():
     global _persistencia_habilitada, _ultimo_id_asignado
 
     try:
-        arch = open(ARCHIVO_USUARIOS, "r", encoding="utf-8")
+        with open(ARCHIVO_USUARIOS, "r", encoding="utf-8") as arch:
+            datos_archivo = json.load(arch)
     except FileNotFoundError:
+        return
+    except json.JSONDecodeError as error:
+        _persistencia_habilitada = False
+        print(f"Error en el archivo de usuarios: {error}")
         return
     except (OSError, UnicodeError) as error:
         _persistencia_habilitada = False
         print(f"No se pudo leer el archivo de usuarios: {error}")
+        return
+
+    if not isinstance(datos_archivo, dict):
+        _persistencia_habilitada = False
+        print("El archivo de usuarios no contiene un objeto JSON valido.")
         return
 
     usuarios_cargados = {}
-    numero_linea = 0
-    try:
-        with arch:
-            cad = arch.readline()
-            if cad.strip() != "{":
+    ultimo_id = _ultimo_id_asignado
+    for id_texto, datos in datos_archivo.items():
+        if id_texto == "_ultimo_id_asignado":
+            if type(datos) is not int or datos < 0:
                 _persistencia_habilitada = False
-                print("El archivo de usuarios no contiene un objeto JSON valido.")
+                print("El ultimo ID guardado en usuarios.json no es valido.")
                 return
+            ultimo_id = max(ultimo_id, datos)
+            continue
 
-            while True:
-                cad = arch.readline()
-                numero_linea += 1
-                if not cad:
-                    _persistencia_habilitada = False
-                    print("El objeto JSON de usuarios no tiene cierre.")
-                    return
-                cad = cad.strip()
-                if cad == "}":
-                    while True:
-                        cad = arch.readline()
-                        if not cad:
-                            break
-                        if cad.strip():
-                            _persistencia_habilitada = False
-                            print("Hay contenido despues del objeto JSON de usuarios.")
-                            return
-                    break
-                if not cad:
-                    continue
-                if cad.endswith(","):
-                    cad = cad[:-1].rstrip()
-                try:
-                    registro = json.loads("{" + cad + "}")
-                except json.JSONDecodeError as error:
-                    _persistencia_habilitada = False
-                    print(f"Error en la linea {numero_linea} del archivo de usuarios: {error}")
-                    return
+        try:
+            id_usuario = int(id_texto)
+        except ValueError:
+            _persistencia_habilitada = False
+            print(f"ID invalido en el archivo de usuarios: {id_texto}.")
+            return
+        if not isinstance(datos, dict):
+            _persistencia_habilitada = False
+            print(f"Datos invalidos para el usuario {id_texto}.")
+            return
+        if not all(
+            isinstance(datos.get(campo, ""), str)
+            for campo in ("nombre", "mail", "telefono", "rol")
+        ):
+            _persistencia_habilitada = False
+            print(f"Datos invalidos para el usuario {id_texto}.")
+            return
 
-                if not isinstance(registro, dict) or len(registro) != 1:
-                    _persistencia_habilitada = False
-                    print(f"Formato invalido en la linea {numero_linea} del archivo de usuarios.")
-                    return
-
-                id_texto, datos = next(iter(registro.items()))
-                if id_texto == "_ultimo_id_asignado":
-                    if type(datos) is not int or datos < 0:
-                        _persistencia_habilitada = False
-                        print("El ultimo ID guardado en usuarios.json no es valido.")
-                        return
-                    _ultimo_id_asignado = max(_ultimo_id_asignado, datos)
-                    continue
-                try:
-                    id_usuario = int(id_texto)
-                except ValueError:
-                    _persistencia_habilitada = False
-                    print(f"ID invalido en la linea {numero_linea} del archivo de usuarios.")
-                    return
-                if not isinstance(datos, dict):
-                    _persistencia_habilitada = False
-                    print(f"Datos invalidos en la linea {numero_linea} del archivo de usuarios.")
-                    return
-                if not all(
-                    isinstance(datos.get(campo, ""), str)
-                    for campo in ("nombre", "mail", "telefono", "rol")
-                ):
-                    _persistencia_habilitada = False
-                    print(f"Datos invalidos en la linea {numero_linea} del archivo de usuarios.")
-                    return
-
-                usuario = {
-                    "nombre": datos.get("nombre", ""),
-                    "edad": datos.get("edad"),
-                    "mail": datos.get("mail", ""),
-                    "telefono": datos.get("telefono", ""),
-                    "contrasena": datos.get("contrasena", ""),
-                    "rol": datos.get("rol", "cliente"),
-                }
-                if datos.get("edad") is not None and type(datos.get("edad")) is not int:
-                    _persistencia_habilitada = False
-                    print(f"Edad invalida en la linea {numero_linea} del archivo de usuarios.")
-                    return
-                if not isinstance(usuario["contrasena"], str):
-                    _persistencia_habilitada = False
-                    print(f"Contrasena invalida en la linea {numero_linea} del archivo de usuarios.")
-                    return
-                usuarios_cargados[id_usuario] = usuario
-    except (OSError, UnicodeError) as error:
-        _persistencia_habilitada = False
-        print(f"No se pudo leer el archivo de usuarios: {error}")
-        return
+        usuario = {
+            "nombre": datos.get("nombre", ""),
+            "edad": datos.get("edad"),
+            "mail": datos.get("mail", ""),
+            "telefono": datos.get("telefono", ""),
+            "contrasena": datos.get("contrasena", ""),
+            "rol": datos.get("rol", "cliente"),
+        }
+        if datos.get("edad") is not None and type(datos.get("edad")) is not int:
+            _persistencia_habilitada = False
+            print(f"Edad invalida para el usuario {id_texto}.")
+            return
+        if not isinstance(usuario["contrasena"], str):
+            _persistencia_habilitada = False
+            print(f"Contrasena invalida para el usuario {id_texto}.")
+            return
+        usuarios_cargados[id_usuario] = usuario
 
     usuarios.clear()
     usuarios.update(usuarios_cargados)
     _ultimo_id_asignado = max(
-        _ultimo_id_asignado,
+        ultimo_id,
         max(usuarios_cargados, default=0),
     )
 
@@ -200,9 +165,13 @@ def mail_valido(mail):
     ) is not None
 
 
-def siguiente_id_usuario():
+def siguiente_id_usuario(matriz_usuarios=None):
     global _ultimo_id_asignado
-    _ultimo_id_asignado = max(_ultimo_id_asignado, max(usuarios, default=0)) + 1
+    matriz_usuarios = usuarios if matriz_usuarios is None else matriz_usuarios
+    _ultimo_id_asignado = max(
+        _ultimo_id_asignado,
+        max(matriz_usuarios, default=0),
+    ) + 1
     return _ultimo_id_asignado
 
 
@@ -270,20 +239,6 @@ def imprimir_Usuarios(usuarios):
 
 
 def registrar_Usuario(matriz_usuarios):
-    global _ultimo_id_asignado
-
-    id_input = input("Ingresar ID  (-1 para volver): ").strip()
-    if volver_al_menu(id_input):
-        return
-    try:
-        id_usuario = int(id_input)
-    except ValueError:
-        print("El ID debe ser un numero entero.")
-        return
-    if id_usuario in matriz_usuarios:
-        print("ID ya registrado.")
-        return
-
     while True:
         nombre = input("Ingresar nombre de usuario  (-1 para volver): ").strip()
         if volver_al_menu(nombre):
@@ -306,16 +261,15 @@ def registrar_Usuario(matriz_usuarios):
         print("La contrasena debe contener solo letras.")
         return
 
+    id_usuario = siguiente_id_usuario(matriz_usuarios)
     matriz_usuarios[id_usuario] = {
         "nombre": nombre,
         **datos,
         "contrasena": contrasena,
         "rol": "cliente",
     }
-    if matriz_usuarios is usuarios:
-        _ultimo_id_asignado = max(_ultimo_id_asignado, id_usuario)
     _guardar_usuarios(matriz_usuarios)
-    print("Usuario registrado correctamente.")
+    print(f"Usuario registrado correctamente. Su ID es {id_usuario}.")
 
 
 def eliminar_Usuario(usuarios):
@@ -348,11 +302,15 @@ def modificar_Usuario(usuarios):
         print("Usuario no encontrado.")
         return
 
-    usuario = usuarios[id_usuario]
+    usuario = usuarios[id_usuario].copy()
     while True:
-        nombre = input("Ingresar nuevo nombre de usuario  (-1 para volver): ").strip()
+        nombre = input(
+            "Ingresar nuevo nombre de usuario (Enter para mantenerlo; -1 para volver): "
+        ).strip()
         if volver_al_menu(nombre):
             return
+        if not nombre:
+            break
         nombre = normalizar_usuario(nombre)
         if not nombre_valido(nombre):
             print("El nombre de usuario no puede estar vacio.")
@@ -360,44 +318,107 @@ def modificar_Usuario(usuarios):
         if _usuario_repetido(nombre, usuarios, excluir_id=id_usuario):
             print("Usuario repetido, intente otra vez.")
             continue
+        usuario["nombre"] = nombre
         break
-    usuario["nombre"] = nombre
-    _guardar_usuarios(usuarios)
 
     while True:
-        edad_input = input("Ingresar nueva edad (18-95)  (-1 para volver): ").strip()
+        edad_input = input(
+            "Ingresar nueva edad (18-95; Enter para mantenerla; -1 para volver): "
+        ).strip()
         if volver_al_menu(edad_input):
             return
+        if not edad_input:
+            break
         try:
             edad = int(edad_input)
         except ValueError:
             print("La edad debe ser un numero entero.")
             continue
-        if 18 <= edad <= 95:
-            usuario["edad"] = edad
-            _guardar_usuarios(usuarios)
-            break
-        print("La edad debe estar entre 18 y 95.")
+        if not 18 <= edad <= 95:
+            print("La edad debe estar entre 18 y 95.")
+            continue
+        usuario["edad"] = edad
+        break
 
     while True:
-        mail = input("Ingresar nuevo mail  (-1 para volver): ").strip()
+        mail = input(
+            "Ingresar nuevo mail (Enter para mantenerlo; -1 para volver): "
+        ).strip()
         if volver_al_menu(mail):
             return
-        if mail_valido(mail):
-            usuario["mail"] = mail
-            _guardar_usuarios(usuarios)
+        if not mail:
             break
-        print("El mail no es valido.")
+        if not mail_valido(mail):
+            print("El mail no es valido.")
+            continue
+        usuario["mail"] = mail
+        break
 
-    telefono = input("Ingresar los 8 digitos del nuevo telefono  (-1 para volver): ").strip()
-    if volver_al_menu(telefono):
-        return
-    if not re.fullmatch(r"[0-9]{8}", telefono):
-        print("El telefono debe contener exactamente 8 digitos numericos.")
-        return
-    usuario["telefono"] = f"+54 9 11 {telefono}"
+    while True:
+        telefono = input(
+            "Ingresar los 8 digitos del nuevo telefono "
+            "(Enter para mantenerlo; -1 para volver): "
+        ).strip()
+        if volver_al_menu(telefono):
+            return
+        if not telefono:
+            break
+        if not re.fullmatch(r"[0-9]{8}", telefono):
+            print("El telefono debe contener exactamente 8 digitos numericos.")
+            continue
+        usuario["telefono"] = f"+54 9 11 {telefono}"
+        break
+
+    while True:
+        contrasena = input(
+            "Ingresar nueva contrasena (solo letras; Enter para mantenerla; -1 para volver): "
+        ).strip()
+        if volver_al_menu(contrasena):
+            return
+        if not contrasena:
+            break
+        if not contrasena_valida(contrasena):
+            print("La contrasena debe contener solo letras.")
+            continue
+        usuario["contrasena"] = contrasena
+        break
+
+    usuarios[id_usuario] = usuario
     _guardar_usuarios(usuarios)
     print("Usuario modificado correctamente.")
+
+
+def gestionar_rol_administrador(matriz_usuarios, administrador):
+    if administrador.get("id") != 1 or administrador.get("rol") != "administrador":
+        print("Solo el administrador superior puede gestionar roles de administrador.")
+        return
+
+    id_input = input(
+        "Ingresar ID del usuario al que desea asignar o quitar el rol administrador "
+        "(-1 para volver): "
+    ).strip()
+    if volver_al_menu(id_input):
+        return
+    try:
+        id_usuario = int(id_input)
+    except ValueError:
+        print("El ID debe ser un numero entero.")
+        return
+    if id_usuario == 1:
+        print("No se puede modificar el rol del administrador superior.")
+        return
+    if id_usuario not in matriz_usuarios:
+        print("Usuario no encontrado.")
+        return
+
+    usuario = matriz_usuarios[id_usuario]
+    if usuario.get("rol") == "administrador":
+        usuario["rol"] = "cliente"
+        print(f"El usuario {usuario['nombre']} ahora tiene rol cliente.")
+    else:
+        usuario["rol"] = "administrador"
+        print(f"El usuario {usuario['nombre']} ahora tiene rol administrador.")
+    _guardar_usuarios(matriz_usuarios)
 
 
 def buscar_usuario(nombre, contrasena):

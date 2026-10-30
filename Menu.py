@@ -54,7 +54,7 @@ def menu_admin(usuario):
             menu_salas(Salas.salas)
 
         elif opcion == "2":
-            menu_usuarios(Usuarios.usuarios)
+            menu_usuarios(Usuarios.usuarios, usuario)
 
         elif opcion == "3":
             Estadisticas.menu_estadisticas(
@@ -129,14 +129,18 @@ def menu_salas(matriz):
             print("Opcion invalida")
 
 
-def menu_usuarios(matriz):
+def menu_usuarios(matriz, administrador):
     while True:
         print(f"\n=== Gestion de usuarios ===")
         print("1. Alta de usuario")
         print("2. Listar usuarios")
         print("3. Modificar usuario")
         print("4. Baja de usuario")
-        print("5. Volver")
+        if administrador.get("id") == 1:
+            print("5. Asignar/quitar rol administrador")
+            print("6. Volver")
+        else:
+            print("5. Volver")
 
         opcion = input("Seleccione una opcion: ").strip()
 
@@ -152,7 +156,13 @@ def menu_usuarios(matriz):
         elif opcion == "4":
             Usuarios.eliminar_Usuario(matriz)
 
-        elif opcion == "5":
+        elif opcion == "5" and administrador.get("id") == 1:
+            Usuarios.gestionar_rol_administrador(matriz, administrador)
+
+        elif opcion == "5" and administrador.get("id") != 1:
+            return
+
+        elif opcion == "6" and administrador.get("id") == 1:
             return
 
         else:
