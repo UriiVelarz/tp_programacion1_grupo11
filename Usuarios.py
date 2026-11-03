@@ -407,16 +407,25 @@ def gestionar_rol_administrador(matriz_usuarios, administrador):
     _guardar_usuarios(matriz_usuarios)
 
 
-def buscar_usuario(nombre, contrasena):
-    nombre_normalizado = normalizar_usuario(nombre)
-    for id_usuario, usuario in usuarios.items():
-        if (
-            normalizar_usuario(usuario.get("nombre")).casefold()
-            == nombre_normalizado.casefold()
-            and usuario.get("contrasena", "") == contrasena
-        ):
-            return {"id": id_usuario, **usuario}
-    return None
+def buscar_usuario(nombre, contrasena, posicion=0):
+    ids = list(usuarios.keys())
+
+    if posicion >= len(ids):
+        return None
+
+    id_usuario = ids[posicion]
+    usuario = usuarios[id_usuario]
+
+    nombre_buscado = normalizar_usuario(nombre).lower()
+    nombre_usuario = normalizar_usuario(usuario["nombre"]).lower()
+
+    if nombre_usuario == nombre_buscado and usuario["contrasena"] == contrasena:
+        resultado = {"id": id_usuario}
+        for clave in usuario:
+            resultado[clave] = usuario[clave]
+        return resultado
+
+    return buscar_usuario(nombre, contrasena, posicion + 1)
 
 
 def registrar_usuario():
