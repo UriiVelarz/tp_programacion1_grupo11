@@ -231,15 +231,11 @@ def contar_reservas_solapadas(
     return cantidad
 
 
-def hay_capacidad_disponible(
-    matriz, tipo_sala, fecha, inicio, fin, reserva_excluida=None
-):
+def hay_capacidad_disponible(matriz, tipo_sala, fecha, inicio, fin, reserva_excluida=None):
     import Salas
 
     capacidad = Salas.cantidad_salas_tipo(tipo_sala)
-    ocupadas = contar_reservas_solapadas(
-        matriz, tipo_sala, fecha, inicio, fin, reserva_excluida
-    )
+    ocupadas = contar_reservas_solapadas(matriz, tipo_sala, fecha, inicio, fin, reserva_excluida)
     return ocupadas < capacidad
 
 
@@ -420,9 +416,7 @@ def modificar_Reserva(matriz, usuario=None):
         return
 
     nuevo_fin = f"{hora + 2:02d}:00"
-    if not hay_capacidad_disponible(
-        matriz, nuevo_sala, nueva_fecha, nuevo_inicio, nuevo_fin, reserva_encontrada
-    ):
+    if not hay_capacidad_disponible(matriz, nuevo_sala, nueva_fecha, nuevo_inicio, nuevo_fin, reserva_encontrada):
         print("No quedan salas de ese tipo disponibles en ese horario.")
         return
 

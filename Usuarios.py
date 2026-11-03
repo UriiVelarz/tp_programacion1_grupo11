@@ -304,9 +304,7 @@ def modificar_Usuario(usuarios):
 
     usuario = usuarios[id_usuario].copy()
     while True:
-        nombre = input(
-            "Ingresar nuevo nombre de usuario (Enter para mantenerlo; -1 para volver): "
-        ).strip()
+        nombre = input("Ingresar nuevo nombre de usuario (Enter para mantenerlo; -1 para volver): ").strip()
         if volver_al_menu(nombre):
             return
         if not nombre:
@@ -322,9 +320,7 @@ def modificar_Usuario(usuarios):
         break
 
     while True:
-        edad_input = input(
-            "Ingresar nueva edad (18-95; Enter para mantenerla; -1 para volver): "
-        ).strip()
+        edad_input = input("Ingresar nueva edad (18-95; Enter para mantenerla; -1 para volver): ").strip()
         if volver_al_menu(edad_input):
             return
         if not edad_input:
@@ -341,9 +337,7 @@ def modificar_Usuario(usuarios):
         break
 
     while True:
-        mail = input(
-            "Ingresar nuevo mail (Enter para mantenerlo; -1 para volver): "
-        ).strip()
+        mail = input("Ingresar nuevo mail (Enter para mantenerlo; -1 para volver): ").strip()
         if volver_al_menu(mail):
             return
         if not mail:
@@ -355,10 +349,7 @@ def modificar_Usuario(usuarios):
         break
 
     while True:
-        telefono = input(
-            "Ingresar los 8 digitos del nuevo telefono "
-            "(Enter para mantenerlo; -1 para volver): "
-        ).strip()
+        telefono = input("Ingresar los 8 digitos del nuevo telefono " "(Enter para mantenerlo; -1 para volver): ").strip()
         if volver_al_menu(telefono):
             return
         if not telefono:
@@ -370,9 +361,7 @@ def modificar_Usuario(usuarios):
         break
 
     while True:
-        contrasena = input(
-            "Ingresar nueva contrasena (solo letras; Enter para mantenerla; -1 para volver): "
-        ).strip()
+        contrasena = input("Ingresar nueva contrasena (solo letras; Enter para mantenerla; -1 para volver): ").strip()
         if volver_al_menu(contrasena):
             return
         if not contrasena:
@@ -393,10 +382,7 @@ def gestionar_rol_administrador(matriz_usuarios, administrador):
         print("Solo el administrador superior puede gestionar roles de administrador.")
         return
 
-    id_input = input(
-        "Ingresar ID del usuario al que desea asignar o quitar el rol administrador "
-        "(-1 para volver): "
-    ).strip()
+    id_input = input("Ingresar ID del usuario al que desea asignar o quitar el rol administrador " "(-1 para volver): ").strip()
     if volver_al_menu(id_input):
         return
     try:
