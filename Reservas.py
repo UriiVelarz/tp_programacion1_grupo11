@@ -216,20 +216,26 @@ def hay_conflicto_reserva_usuario(matriz, usuario, fecha, inicio, reserva_exclui
 
 
 def contar_reservas_solapadas(
-    matriz, tipo_sala, fecha, inicio, fin, reserva_excluida=None
+    matriz, tipo_sala, fecha, inicio, fin, reserva_excluida=None, f=0
 ):
+    if f == len(matriz):
+        return 0
+
+    reserva = matriz[f]
+    cantidad_resto = contar_reservas_solapadas(
+        matriz, tipo_sala, fecha, inicio, fin, reserva_excluida, f + 1
+    )
+
+    if reserva is reserva_excluida or reserva[1] != tipo_sala or reserva[3] != fecha:
+        return cantidad_resto
+
     inicio_solicitado = int(inicio[:2])
     fin_solicitado = int(fin[:2])
-    cantidad = 0
-    for reserva in matriz:
-        if reserva is reserva_excluida or reserva[1] != tipo_sala or reserva[3] != fecha:
-            continue
-        inicio_existente = int(reserva[4][:2])
-        fin_existente = int(reserva[5][:2])
-        if inicio_solicitado < fin_existente and inicio_existente < fin_solicitado:
-            cantidad += 1
-    return cantidad
-
+    inicio_existente = int(reserva[4][:2])
+    fin_existente = int(reserva[5][:2])
+    if inicio_solicitado < fin_existente and inicio_existente < fin_solicitado:
+        return 1 + cantidad_resto
+    return cantidad_resto
 
 def hay_capacidad_disponible(matriz, tipo_sala, fecha, inicio, fin, reserva_excluida=None):
     import Salas
