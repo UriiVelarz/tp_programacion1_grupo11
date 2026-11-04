@@ -12,6 +12,14 @@ reservas = []
 
 
 def _cargar_reservas():
+    '''
+    pre: utiliza el archivo reservas.txt, que contiene los datos de las reservas
+         registradas en formato CSV, separados por punto y coma.
+    pos: lee y valida los datos del archivo, comprueba que el encabezado y los
+         registros tengan el formato correcto y carga las reservas en la matriz
+         correspondiente. Si encuentra errores, deshabilita la persistencia
+         e informa el problema.
+    '''
     global _persistencia_habilitada
     if not os.path.exists(ARCHIVO_RESERVAS):
         return
@@ -45,6 +53,14 @@ def _cargar_reservas():
 
 
 def _guardar_reservas(matriz):
+    ''' 
+    pre: recibe una matriz de reservas, donde cada fila representa una reserva
+         con sus datos [id_reserva, tipo_sala, id_usuario, fecha, inicio, fin].
+    pos: guarda las reservas en el archivo reservas.txt en formato CSV,
+         utilizando un archivo temporal para evitar la perdida de datos ante
+         errores durante la escritura. Solo permite guardar la matriz original
+         de reservas y verifica que la persistencia este habilitada.
+    '''
     if matriz is not reservas:
         return
     if not _persistencia_habilitada:
@@ -83,6 +99,11 @@ def _guardar_reservas(matriz):
 
 
 def volver_al_menu(valor):
+    '''
+    pre: recibe un valor ingresado por el usuario.
+    pos: verifica si el valor ingresado es "-1" para indicar que desea volver
+         al menu principal. Devuelve True si desea regresar y False en caso contrario.
+    '''
     if valor == "-1":
         print("Volviendo al menu principal...")
         return True
@@ -90,6 +111,11 @@ def volver_al_menu(valor):
 
 
 def convertir_entero(texto):
+    ''' 
+    pre: recibe una cadena de texto que representa un posible numero entero.
+    pos: intenta convertir el texto a un numero entero y lo devuelve si la
+         conversion es correcta. Si el valor no es valido, devuelve None.
+    '''
     try:
         return int(texto)
     except ValueError:
@@ -97,6 +123,12 @@ def convertir_entero(texto):
 
 
 def reservas_por_usuario(matriz, usuario):
+    ''' 
+    pre: recibe una matriz de reservas y el ID de un usuario.
+    pos: filtra las reservas correspondientes al usuario indicado y devuelve
+         una lista de tuplas que contiene el ID de cada reserva junto con
+         sus datos completos.
+    '''
     filtradas = Funciones.filtrar_reservas_por_usuario(matriz, usuario)
     return [(reserva[0], reserva) for reserva in filtradas]
 
@@ -132,6 +164,11 @@ def imprimir_Reservas(matriz, usuario=None):
 
 
 def obtener_dias_del_mes(mes):
+    '''
+    pre: recibe el numero correspondiente a un mes del año.
+    pos: devuelve la cantidad de dias que tiene el mes indicado, considerando
+         febrero con 28 dias. Si el numero de mes no es valido, devuelve 0.
+    '''
     dias_por_mes = {
         1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30,
         7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31
@@ -140,6 +177,15 @@ def obtener_dias_del_mes(mes):
 
 
 def pedir_fecha_reserva(etiqueta=""):
+    '''
+    pre: recibe opcionalmente una etiqueta para identificar la fecha que se
+         solicita, por ejemplo, una fecha nueva durante la modificacion
+         de una reserva.
+    pos: solicita el año, el mes y el dia de la reserva, validando que la fecha
+         exista y se encuentre dentro del periodo permitido para realizar
+         reservas. Devuelve la fecha en formato dd/mm/aaaa o None si el usuario
+         decide volver al menu principal.
+    '''
     import Salas
 
     fecha_hoy = datetime.date.today()
@@ -195,6 +241,13 @@ def pedir_fecha_reserva(etiqueta=""):
 
 
 def pedir_opcion(mensaje, opciones_validos):
+    '''
+    pre: recibe un mensaje para solicitar una opcion y una coleccion con los
+         valores permitidos.
+    pos: solicita una opcion al usuario y verifica que pertenezca a los valores
+         permitidos. Devuelve la opcion ingresada si es valida o "-1" si desea
+         volver al menu principal.
+    '''
     while True:
         valor = input(mensaje).strip()
         if valor == "-1":
@@ -206,6 +259,13 @@ def pedir_opcion(mensaje, opciones_validos):
 
 
 def hay_conflicto_reserva_usuario(matriz, usuario, fecha, inicio, reserva_excluida=None):
+    '''
+    pre: recibe una matriz de reservas, el ID de un usuario, una fecha, una hora
+         de inicio y opcionalmente una reserva que debe excluirse de la comparacion.
+    pos: verifica si el usuario ya tiene una reserva registrada en la misma fecha
+         y horario de inicio. Devuelve True si encuentra un conflicto y False
+         en caso contrario.
+    '''
     usuario_id = str(usuario)
     for reserva in matriz:
         if reserva is reserva_excluida:
@@ -218,6 +278,14 @@ def hay_conflicto_reserva_usuario(matriz, usuario, fecha, inicio, reserva_exclui
 def contar_reservas_solapadas(
     matriz, tipo_sala, fecha, inicio, fin, reserva_excluida=None, f=0
 ):
+    '''
+    pre: recibe una matriz de reservas, un tipo de sala, una fecha, un horario
+         de inicio y fin, una reserva opcional que debe excluirse y una posicion
+         inicial para recorrer la matriz.
+    pos: cuenta recursivamente las reservas del mismo tipo de sala y fecha cuyos
+         horarios se superponen con el periodo solicitado. Devuelve la cantidad
+         de reservas que ocupan ese horario, sin considerar la reserva excluida.
+    '''
     if f == len(matriz):
         return 0
 
@@ -238,6 +306,13 @@ def contar_reservas_solapadas(
     return cantidad_resto
 
 def hay_capacidad_disponible(matriz, tipo_sala, fecha, inicio, fin, reserva_excluida=None):
+    '''
+    pre: recibe una matriz de reservas, un tipo de sala, una fecha, un horario
+         de inicio y fin y opcionalmente una reserva que debe excluirse del calculo.
+    pos: obtiene la cantidad de salas disponibles del tipo solicitado y la compara
+         con las reservas que se superponen en ese horario. Devuelve True si
+         todavia hay capacidad disponible y False en caso contrario.
+    '''
     import Salas
 
     capacidad = Salas.cantidad_salas_tipo(tipo_sala)
@@ -247,10 +322,12 @@ def hay_capacidad_disponible(matriz, tipo_sala, fecha, inicio, fin, reserva_excl
 
 def realizar_Reserva(matriz, id_usuario=0):
     '''
-    pre: recibe una matriz de reservas, donde cada fila representa una reserva con sus datos
-         [id_reserva, sala, id_usuario, fecha, inicio, fin].
-    pos: genera automaticamente un id correlativo para la reserva del usuario actual,
-         solicita el tamaño de sala, la fecha y la hora, y guarda la reserva.
+    pre: recibe una matriz de reservas y opcionalmente el ID del usuario que
+         desea realizar una reserva.
+    pos: solicita el tipo de sala, la fecha y la hora de inicio, validando que
+         los datos sean correctos, que el usuario no tenga otra reserva en el
+         mismo horario y que exista capacidad disponible. Genera un ID correlativo,
+         agrega la nueva reserva a la matriz y guarda los cambios realizados.
     '''
 
     import Salas
@@ -308,10 +385,12 @@ def realizar_Reserva(matriz, id_usuario=0):
 
 def eliminar_Reserva(matriz, usuario=None):
     '''
-        pre: recibe una matriz de reservas, donde cada fila representa una reserva con sus datos
-             [id_reserva, sala, id_usuario, fecha, inicio, fin].
-        pos: solicita un id de reserva por consola. si el id existe en la matriz, elimina la reserva de 
-             la matriz original y muestra un mensaje de exito. si no existe, muestra un mensaje de error.
+    pre: recibe una matriz de reservas y el ID del usuario que desea cancelar
+         una reserva.
+    pos: muestra las reservas del usuario, solicita el ID de la reserva que
+         desea eliminar y verifica que le pertenezca. Si existe, la elimina
+         de la matriz original y guarda los cambios realizados. Si no se
+         encuentra, informa el problema.
     '''
 
     if usuario is None:
@@ -345,11 +424,13 @@ def eliminar_Reserva(matriz, usuario=None):
 
 def modificar_Reserva(matriz, usuario=None):
     '''
-        pre: recibe una matriz de reservas, donde cada fila representa una reserva con sus datos
-             [id_reserva, sala, id_usuario, fecha, inicio, fin].
-        pos: solicita un id de reserva por consola. si lo encuentra, pide los nuevos datos 
-             (sala, fecha, inicio y fin) para sobreescribir los valores originales en la matriz.
-             si el id no existe, la funcion termina sin realizar cambios.
+    pre: recibe una matriz de reservas y el ID del usuario que desea modificar
+         una reserva.
+    pos: muestra las reservas del usuario, solicita el ID de la reserva y permite
+         modificar el tipo de sala, la fecha y el horario. Verifica que no existan
+         conflictos con otras reservas del usuario y que haya capacidad disponible.
+         Si los nuevos datos son validos, actualiza la reserva original y guarda
+         los cambios realizados.
     '''
 
     if usuario is None:

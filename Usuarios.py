@@ -11,6 +11,13 @@ _persistencia_habilitada = True
 
 
 def _guardar_usuarios(matriz_usuarios):
+    '''
+    pre: recibe un diccionario de usuarios, donde cada clave representa el ID del usuario
+         y cada valor contiene sus datos [nombre, edad, mail, telefono, contrasena, rol].
+    pos: guarda los usuarios y el ultimo ID asignado en el archivo usuarios.json,
+         ordenando los registros por ID y utilizando un archivo temporal para evitar
+         la perdida de datos ante errores durante la escritura.
+    '''
     if matriz_usuarios is not usuarios:
         return
     if not _persistencia_habilitada:
@@ -57,6 +64,13 @@ def _guardar_usuarios(matriz_usuarios):
 
 
 def _cargar_usuarios():
+    '''
+    pre: utiliza el archivo usuarios.json, que contiene los datos de los usuarios
+         registrados y el ultimo ID asignado.
+    pos: lee y valida los datos del archivo, carga los usuarios en el diccionario
+         correspondiente y actualiza el ultimo ID asignado. Si encuentra errores
+         en el archivo, deshabilita la persistencia e informa el problema.
+    '''
     global _persistencia_habilitada, _ultimo_id_asignado
 
     try:
@@ -137,6 +151,11 @@ ROLES = {"administrador", "cliente"}
 MAX_INTENTOS = 3
 
 def volver_al_menu(valor):
+    '''
+    pre: recibe un valor ingresado por el usuario.
+    pos: verifica si el valor ingresado es "-1" para indicar que desea volver
+         al menu principal. Devuelve True si desea regresar y False en caso contrario.
+    '''
     if valor == "-1":
         print("Volviendo al menu principal...")
         return True
@@ -144,20 +163,44 @@ def volver_al_menu(valor):
 
 
 def normalizar_usuario(nombre):
+    '''
+    pre: recibe un nombre de usuario como cadena de texto.
+    pos: elimina los espacios al principio y al final, reemplaza los espacios
+         repetidos por uno solo y devuelve el nombre normalizado. Si recibe None,
+         devuelve una cadena vacia.
+    '''
     if nombre is None:
         return ""
     return " ".join(nombre.strip().split())
 
 
 def nombre_valido(nombre):
+    '''
+    pre: recibe un nombre de usuario como cadena de texto.
+    pos: elimina los espacios al principio y al final, reemplaza los espacios
+         repetidos por uno solo y devuelve el nombre normalizado. Si recibe None,
+         devuelve una cadena vacia.
+    '''
     return bool(normalizar_usuario(nombre))
 
 
 def contrasena_valida(contrasena):
+    '''
+    pre: recibe una contrasena ingresada por el usuario.
+    pos: verifica que la contrasena contenga unicamente letras, sin numeros,
+         espacios ni caracteres especiales. Devuelve True si es valida y
+         False en caso contrario.
+    '''
     return re.fullmatch(r"[^\W\d_]+", contrasena, re.UNICODE) is not None
 
 
 def mail_valido(mail):
+    '''
+    pre: recibe una direccion de correo electronico ingresada por el usuario.
+    pos: verifica que tenga un formato valido y que pertenezca a alguno de los
+         dominios permitidos: gmail.com, hotmail.com, yahoo.com u outlook.com.
+         Devuelve True si cumple las condiciones y False en caso contrario.
+    '''
     return re.fullmatch(
         r"[^@\s]+@(gmail\.com|hotmail\.com|yahoo\.com|outlook\.com)",
         mail,
@@ -166,6 +209,13 @@ def mail_valido(mail):
 
 
 def siguiente_id_usuario(matriz_usuarios=None):
+    '''
+    pre: recibe opcionalmente un diccionario de usuarios, donde cada clave
+         representa el ID de un usuario registrado.
+    pos: genera y devuelve un nuevo ID correlativo, tomando como referencia
+         el ultimo ID asignado y el mayor ID existente en el diccionario.
+         Actualiza el ultimo ID asignado.
+    '''
     global _ultimo_id_asignado
     matriz_usuarios = usuarios if matriz_usuarios is None else matriz_usuarios
     _ultimo_id_asignado = max(
@@ -176,6 +226,13 @@ def siguiente_id_usuario(matriz_usuarios=None):
 
 
 def _usuario_repetido(nombre, matriz_usuarios, excluir_id=None):
+    '''
+    pre: recibe un nombre de usuario, un diccionario de usuarios registrados
+         y opcionalmente un ID que debe excluirse de la comparacion.
+    pos: verifica si el nombre ingresado ya pertenece a otro usuario, ignorando
+         diferencias entre mayusculas y minusculas y espacios innecesarios.
+         Devuelve True si el nombre esta repetido y False en caso contrario.
+    '''
     nombres_registrados = {
         normalizar_usuario(usuario.get("nombre")).casefold()
         for id_usuario, usuario in matriz_usuarios.items()
@@ -185,6 +242,14 @@ def _usuario_repetido(nombre, matriz_usuarios, excluir_id=None):
 
 
 def solicitar_datos_personales():
+    '''
+    pre: no recibe parametros.
+    pos: solicita la edad, el mail y el telefono del usuario, validando que la
+         edad este entre 18 y 95 años, que el mail pertenezca a un dominio
+         permitido y que el telefono contenga exactamente 8 digitos. Devuelve
+         un diccionario con los datos personales validados o None si el usuario
+         decide volver al menu principal.
+    '''
     while True:
         edad_input = input("Ingresar edad (entre 18 y 95)  (-1 para volver): ").strip()
         if volver_al_menu(edad_input):
@@ -222,6 +287,12 @@ def solicitar_datos_personales():
 
 
 def imprimir_Usuarios(usuarios):
+    '''
+    pre: recibe un diccionario de usuarios, donde cada clave representa el ID
+         del usuario y cada valor contiene sus datos personales y su rol.
+    pos: muestra por pantalla todos los usuarios registrados, ordenados por ID,
+         incluyendo su nombre, edad, mail, telefono y rol.
+    '''
     print("=" * 105)
     print(f"{'Usuarios':55}")
     print("=" * 105)
@@ -239,6 +310,12 @@ def imprimir_Usuarios(usuarios):
 
 
 def registrar_Usuario(matriz_usuarios):
+    '''
+    pre: recibe un diccionario de usuarios registrados.
+    pos: solicita el nombre, los datos personales y la contrasena del nuevo usuario,
+         validando que el nombre no este repetido y que los datos sean correctos.
+         Genera un nuevo ID, registra al usuario con rol cliente y guarda los cambios.
+    '''
     while True:
         nombre = input("Ingresar nombre de usuario  (-1 para volver): ").strip()
         if volver_al_menu(nombre):
@@ -273,6 +350,13 @@ def registrar_Usuario(matriz_usuarios):
 
 
 def eliminar_Usuario(usuarios):
+    '''
+    pre: recibe un diccionario de usuarios, donde cada clave representa el ID
+         del usuario registrado.
+    pos: solicita el ID del usuario que se desea eliminar, verifica que sea un
+         numero entero y que exista en el diccionario. Si existe, lo elimina
+         y guarda los cambios realizados.
+    '''
     id_input = input("Ingresar ID  (-1 para volver): ").strip()
     if volver_al_menu(id_input):
         return
@@ -290,6 +374,12 @@ def eliminar_Usuario(usuarios):
 
 
 def modificar_Usuario(usuarios):
+    '''
+    pre: recibe un diccionario de usuarios registrados.
+    pos: solicita el ID del usuario que se desea modificar y permite actualizar
+         su nombre, edad, mail, telefono y contrasena. Valida los nuevos datos,
+         conserva los campos que no se desean modificar y guarda los cambios.
+    '''
     id_input = input("Ingresar ID del usuario a modificar  (-1 para volver): ").strip()
     if volver_al_menu(id_input):
         return
@@ -378,6 +468,14 @@ def modificar_Usuario(usuarios):
 
 
 def gestionar_rol_administrador(matriz_usuarios, administrador):
+    '''
+    pre: recibe un diccionario de usuarios registrados y los datos del administrador
+         que realiza la operacion.
+    pos: verifica que quien realiza la operacion sea el administrador superior
+         (ID 1). Solicita el ID de un usuario y alterna su rol entre cliente y
+         administrador, impidiendo modificar el rol del administrador superior.
+         Guarda los cambios realizados.
+    '''
     if administrador.get("id") != 1 or administrador.get("rol") != "administrador":
         print("Solo el administrador superior puede gestionar roles de administrador.")
         return
@@ -408,6 +506,13 @@ def gestionar_rol_administrador(matriz_usuarios, administrador):
 
 
 def buscar_usuario(nombre, contrasena, posicion=0):
+    '''
+    pre: recibe un nombre de usuario, una contrasena y una posicion inicial
+         para recorrer el diccionario global de usuarios.
+    pos: busca recursivamente un usuario que coincida con el nombre y la
+         contrasena ingresados. Devuelve un diccionario con sus datos e ID
+         si encuentra una coincidencia, o None si no existe.
+    '''
     ids = list(usuarios.keys())
 
     if posicion >= len(ids):
@@ -429,7 +534,14 @@ def buscar_usuario(nombre, contrasena, posicion=0):
 
 
 def registrar_usuario():
-    """Registro desde login: crea la cuenta en el mismo diccionario del CRUD."""
+    '''
+    pre: utiliza el diccionario global de usuarios para registrar una nueva cuenta
+         desde la pantalla de inicio de sesion.
+    pos: solicita y valida el nombre, la contrasena y los datos personales del
+         nuevo usuario. Genera un ID correlativo, registra la cuenta con rol
+         cliente, guarda los cambios y devuelve un diccionario con los datos
+         del usuario registrado y su ID.
+    '''
     while True:
         nombre = input("Nuevo nombre de usuario  (-1 para volver): ").strip()
         if volver_al_menu(nombre):
@@ -469,6 +581,14 @@ def registrar_usuario():
 
 
 def iniciar_sesion():
+    '''
+    pre: utiliza el diccionario global de usuarios y la cantidad maxima de
+         intentos permitidos para verificar las credenciales ingresadas.
+    pos: solicita el nombre de usuario y la contrasena, verifica que coincidan
+         con una cuenta registrada y que esta tenga un rol valido y una contrasena
+         configurada. Devuelve los datos del usuario si inicia sesion correctamente
+         o None si cancela o supera la cantidad maxima de intentos.
+    '''
     intentos = 0
     while intentos < MAX_INTENTOS:
         nombre = input("Usuario  (-1 para volver): ").strip()

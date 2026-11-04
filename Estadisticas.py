@@ -15,6 +15,12 @@ def fecha_a_clave(fecha):
 
 
 def validar_fecha(texto):
+    '''
+    pre: recibe una fecha ingresada como cadena de texto en formato dd/mm/aaaa.
+    pos: verifica que la fecha tenga un formato correcto, que corresponda a los
+         años 2026 o 2027 y que el día y el mes sean validos. Devuelve la fecha
+         normalizada con dos digitos para el dia y el mes, o None si es invalida.
+    '''
     partes = texto.split("/")
     if len(partes) != 3:
         return None
@@ -39,6 +45,14 @@ def validar_fecha(texto):
 
 
 def filtrar_por_periodo(reservas, fecha_desde=None, fecha_hasta=None):
+    '''
+    pre: recibe una matriz de reservas, donde cada fila contiene los datos
+         [id_reserva, sala, id_usuario, fecha, inicio, fin], y opcionalmente
+         una fecha inicial y una fecha final.
+    pos: filtra y devuelve una lista con las reservas comprendidas dentro del
+         periodo indicado, incluyendo las fechas limite. Si alguno de los
+         extremos no se especifica, no aplica un limite para ese extremo.
+    '''
     desde = "00000000"
     hasta = "99999999"
     if fecha_desde is not None:
@@ -53,10 +67,23 @@ def filtrar_por_periodo(reservas, fecha_desde=None, fecha_hasta=None):
 
 
 def total_reservas(reservas):
+    '''
+    pre: recibe una matriz de reservas, donde cada fila representa una reserva
+         registrada.
+    pos: cuenta y devuelve la cantidad total de reservas utilizando una funcion
+         acumuladora.
+    '''
     return reduce(lambda acumulado, reserva: acumulado + 1, reservas, 0)
 
 
 def reservas_por_tipo_sala(reservas):
+    '''
+    pre: recibe una matriz de reservas, donde cada fila contiene el tipo de sala
+         en la posicion 1.
+    pos: cuenta recursivamente la cantidad de reservas correspondientes a cada
+         tipo de sala y devuelve un diccionario donde cada clave representa
+         un tipo y cada valor su cantidad de reservas.
+    '''
     if not reservas:
         return {}
     else:
@@ -67,6 +94,13 @@ def reservas_por_tipo_sala(reservas):
 
 
 def reservas_por_usuario(reservas):
+    '''
+    pre: recibe una matriz de reservas, donde cada fila contiene el ID del usuario
+         en la posicion 2.
+    pos: cuenta la cantidad de reservas realizadas por cada usuario y devuelve
+         un diccionario donde cada clave representa un ID de usuario y cada
+         valor la cantidad de reservas correspondientes.
+    '''
     conteo = {}
     for reserva in reservas:
         id_usuario = str(reserva[2])
@@ -75,6 +109,13 @@ def reservas_por_usuario(reservas):
 
 
 def dias_con_reservas(reservas):
+    '''
+    pre: recibe una matriz de reservas, donde cada fila contiene la fecha de
+         la reserva en la posicion 3.
+    pos: obtiene recursivamente las fechas en las que existen reservas, evitando
+         repetir aquellas que aparecen mas de una vez. Devuelve una lista
+         con los dias registrados.
+    '''
     if len(reservas) == 0:
         return[]
 
@@ -88,6 +129,12 @@ def dias_con_reservas(reservas):
 
 
 def contar_dias_recursivo(fechas):
+    '''
+    pre: recibe una lista de fechas sin repetir correspondientes a dias
+         en los que existen reservas.
+    pos: cuenta recursivamente la cantidad de elementos de la lista y devuelve
+         el total de dias registrados.
+    '''
     if len(fechas) == 0:
         return 0
 
@@ -95,6 +142,13 @@ def contar_dias_recursivo(fechas):
 
 
 def promedio_diario(reservas):
+    '''
+    pre: recibe una matriz de reservas, donde cada fila representa una reserva
+         y contiene su fecha correspondiente.
+    pos: calcula el promedio de reservas por dia dividiendo la cantidad total
+         de reservas por la cantidad de dias distintos con reservas. Devuelve
+         0 si no existen reservas.
+    '''
     fechas = dias_con_reservas(reservas)
     if len(fechas) == 0:
         return 0
@@ -103,6 +157,12 @@ def promedio_diario(reservas):
 
 
 def promedio_por_sala(reservas, salas):
+    '''
+    pre: recibe una matriz de reservas y una estructura de salas registradas.
+    pos: calcula y devuelve el promedio de reservas por sala, dividiendo la
+         cantidad total de reservas por la cantidad de salas disponibles.
+         Devuelve 0 si no existen salas registradas.
+    '''
     cantidad_salas = len(salas)
     if cantidad_salas == 0:
         return 0
@@ -110,6 +170,13 @@ def promedio_por_sala(reservas, salas):
 
 
 def porcentaje_por_tipo_sala(reservas):
+    '''
+    pre: recibe una matriz de reservas, donde cada fila contiene el tipo de sala
+         correspondiente.
+    pos: calcula el porcentaje de reservas de cada tipo de sala respecto del
+         total de reservas y devuelve un diccionario con cada tipo y su
+         porcentaje. Si no existen reservas, asigna 0 a todos los tipos.
+    '''
     total = total_reservas(reservas)
     conteo = reservas_por_tipo_sala(reservas)
     porcentajes = {}
@@ -124,6 +191,15 @@ def porcentaje_por_tipo_sala(reservas):
 
 
 def extremos_por_categoria(conteo):
+    '''
+    pre: recibe un diccionario donde cada clave representa una categoria
+         y cada valor indica su cantidad de reservas.
+    pos: identifica las categorias con mayor y menor cantidad de reservas,
+         contemplando los casos en que varias categorias tengan el mismo valor.
+         Devuelve las listas de categorias maximas y minimas junto con sus
+         respectivas cantidades. Si el diccionario esta vacio, devuelve
+         listas vacias y valores iguales a 0.
+    '''
     if len(conteo) == 0:
         return ([], 0, [], 0)
 
@@ -147,12 +223,24 @@ def extremos_por_categoria(conteo):
 
 
 def nombre_tipo_sala(tipo):
+    '''
+    pre: recibe el identificador de un tipo de sala.
+    pos: busca el nombre correspondiente en el diccionario de tipos de sala
+         y lo devuelve. Si el tipo no existe, devuelve un texto indicando
+         su identificador.
+    '''
     if tipo in Salas.TIPOS_SALA:
         return Salas.TIPOS_SALA[tipo]["nombre"]
     return f"Tipo {tipo}"
 
 
 def nombre_usuario(usuarios, id_usuario):
+    '''
+    pre: recibe un diccionario de usuarios registrados y el ID de un usuario.
+    pos: verifica si el ID corresponde a un usuario existente y devuelve su
+         nombre acompañado del ID. Si no encuentra el usuario o el ID no es
+         valido, devuelve el identificador recibido como texto.
+    '''
     if str(id_usuario).isdigit():
         try:
             id_numerico = int(id_usuario)
@@ -164,6 +252,11 @@ def nombre_usuario(usuarios, id_usuario):
 
 
 def unir_tipos(lista_tipos):
+    '''
+    pre: recibe una lista de identificadores correspondientes a tipos de sala.
+    pos: obtiene el nombre de cada tipo mediante la funcion nombre_tipo_sala()
+         y los une en una unica cadena de texto separados por comas.
+    '''
     nombres = []
     for tipo in lista_tipos:
         nombres.append(nombre_tipo_sala(tipo))
@@ -171,6 +264,11 @@ def unir_tipos(lista_tipos):
 
 
 def unir_usuarios(usuarios, lista_ids):
+    '''
+    pre: recibe una lista de identificadores correspondientes a tipos de sala.
+    pos: obtiene el nombre de cada tipo mediante la funcion nombre_tipo_sala()
+         y los une en una unica cadena de texto separados por comas.
+    '''
     nombres = []
     for id_usuario in lista_ids:
         nombres.append(nombre_usuario(usuarios, id_usuario))
@@ -178,6 +276,16 @@ def unir_usuarios(usuarios, lista_ids):
 
 
 def mostrar_resumen(reservas, salas, usuarios, fecha_desde=None, fecha_hasta=None):
+    '''
+    pre: recibe una matriz de reservas, una estructura de salas, un diccionario
+         de usuarios y opcionalmente una fecha inicial y una fecha final para
+         limitar el periodo del reporte.
+    pos: filtra las reservas segun el periodo indicado y muestra un informe
+         estadistico con el total de reservas, dias registrados, promedios,
+         cantidades por tipo de sala, porcentajes, rankings de usuarios y
+         categorias con mayor y menor cantidad de reservas. Si no existen
+         reservas en el periodo, informa que no hay datos disponibles.
+    '''
     filtradas = filtrar_por_periodo(reservas, fecha_desde, fecha_hasta)
     total = total_reservas(filtradas)
 
@@ -253,6 +361,12 @@ def mostrar_resumen(reservas, salas, usuarios, fecha_desde=None, fecha_hasta=Non
 
 
 def pedir_fecha(mensaje):
+    '''
+    pre: recibe un mensaje que se utiliza para solicitar una fecha al usuario.
+    pos: solicita una fecha, valida su formato y comprueba que no sea posterior
+         a la fecha actual. Devuelve la fecha validada, una cadena vacia si no
+         se ingresa ningun valor o "-1" si el usuario desea volver al menu.
+    '''
     while True:
         texto = input(mensaje).strip()
         if texto == "-1":
@@ -270,6 +384,14 @@ def pedir_fecha(mensaje):
 
 
 def pedir_periodo():
+    '''
+    pre: no recibe parametros.
+    pos: solicita una fecha inicial y una fecha final para establecer el periodo
+         de consulta de los reportes. Verifica que la fecha inicial no sea
+         posterior a la fecha final y permite dejar cualquiera de los extremos
+         sin limite. Devuelve una tupla con ambas fechas o None si el usuario
+         decide volver al menu de reportes.
+    '''
     while True:
         print("Dejar vacio para no limitar ese extremo. -1 para volver al menu de reportes.")
 
@@ -297,6 +419,16 @@ def pedir_periodo():
 
 
 def menu_estadisticas(reservas=None, salas=None, usuarios=None):
+    '''
+    pre: recibe opcionalmente una matriz de reservas, una estructura de salas
+         y un diccionario de usuarios. Si no se proporcionan, utiliza las
+         estructuras globales correspondientes.
+    pos: muestra un menu interactivo que permite consultar distintos reportes
+         estadisticos, como el total de reservas, reservas por tipo de sala,
+         porcentajes, reservas por usuario, dias registrados, promedios y
+         categorias con mayor y menor cantidad de reservas. Permite generar
+         resumenes generales o por periodo y regresar al menu anterior.
+    '''
     if reservas is None:
         reservas = Reservas.reservas
     if salas is None:

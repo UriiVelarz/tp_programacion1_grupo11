@@ -4,9 +4,17 @@ import Usuarios
 import Estadisticas
 
 def es_admin(usuario):
+    '''
+    pre: recibe un diccionario con los datos de un usuario.
+    pos: devuelve True si el rol del usuario es administrador y False en caso contrario.
+    '''
     return usuario.get("rol") == "administrador"
 
 def menu_usuario_logueado(usuario):
+    '''
+    pre: recibe un diccionario con los datos del usuario que inicio sesion.
+    pos: muestra el menu de opciones para usuarios comunes y permite realizar reservas, consultar, modificar o cancelar reservas, consultar la disponibilidad mensual y cerrar sesion.
+    '''
     while True:
         print(f"\n=== Bienvenido/a {usuario['nombre']} (ID {usuario['id']}) ===")
         print("1. Reservar sala")
@@ -41,6 +49,10 @@ def menu_usuario_logueado(usuario):
 
 
 def menu_admin(usuario):
+    '''
+    pre: recibe un diccionario con los datos del administrador que inicio sesion.
+    pos: muestra el menu de administrador y permite gestionar salas, gestionar usuarios, consultar reportes estadisticos, consultar la disponibilidad mensual y cerrar sesion.
+    '''
     while True:
         print(f"\n=== Menu administrador: {usuario['nombre']} ===")
         print("1. Gestionar salas")
@@ -73,6 +85,10 @@ def menu_admin(usuario):
 
 
 def menu_principal():
+    '''
+    pre: utiliza los modulos de usuarios, salas, reservas y estadisticas del sistema.
+    pos: muestra el menu principal y permite registrar usuarios, iniciar sesion o salir del sistema. segun el rol del usuario que inicia sesion, dirige al menu correspondiente.
+    '''
     while True:
         print("\n=== Sistema de reserva de salas ===")
         print("1. Registrar usuario")
@@ -100,6 +116,10 @@ def menu_principal():
 
 
 def menu_salas(matriz):
+    '''
+    pre: recibe una matriz de salas, donde cada fila contiene los datos de una sala.
+    pos: muestra el menu de gestion de salas y permite agregar, listar, modificar o eliminar salas, o volver al menu anterior.
+    '''
     while True:
         print(f"\n=== Gestion de salas ===")
         print("1. Alta de sala")
@@ -130,6 +150,10 @@ def menu_salas(matriz):
 
 
 def menu_usuarios(matriz, administrador):
+    '''
+    pre: recibe una matriz de usuarios y un diccionario con los datos del administrador que realiza la gestion.
+    pos: muestra el menu de gestion de usuarios y permite registrar, listar, modificar o eliminar usuarios. si el administrador tiene id 1, tambien permite asignar o quitar roles de administrador.
+    '''
     while True:
         print(f"\n=== Gestion de usuarios ===")
         print("1. Alta de usuario")

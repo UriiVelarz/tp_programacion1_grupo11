@@ -25,18 +25,34 @@ COLOR_RESET = "\033[0m"
 
 
 def limpiar_ansi(texto):
+    '''
+    pre: recibe un texto que puede contener codigos de color ANSI.
+    pos: devuelve el texto sin los codigos de color ANSI.   
+    '''
     return re.sub(r"\x1b\[[0-9;]*m", "", texto)
 
 
 def validar_id_sala(texto):
+    '''
+    pre: recibe un texto que representa el identificador de una sala.
+    pos: devuelve True si el texto contiene un numero entero positivo sin ceros iniciales y False en caso contrario.
+    '''
     return re.fullmatch(r"[1-9]\d*", texto) is not None
 
 
 def validar_capacidad(texto):
+    '''
+    pre: recibe un texto que representa la capacidad de una sala.
+    pos: devuelve True si el texto contiene un numero entero positivo sin ceros iniciales y False en caso contrario.
+    '''
     return re.fullmatch(r"[1-9]\d*", texto) is not None
 
 
 def convertir_entero(texto):
+    '''
+    pre: recibe un texto que se desea convertir a un numero entero.
+    pos: devuelve el valor convertido a entero o None si ocurre un error de conversion.
+    '''
     try:
         return int(texto)
     except ValueError:
@@ -44,23 +60,39 @@ def convertir_entero(texto):
 
 
 def formatear_celda(texto, ancho):
+    '''
+    pre: recibe un texto y el ancho deseado para una celda.
+    pos: devuelve el texto completado con espacios hasta alcanzar el ancho indicado, sin contar los codigos ANSI.
+    '''
     texto_limpio = limpiar_ansi(texto)
     espacios = max(0, ancho - len(texto_limpio))
     return texto + (" " * espacios)
 
 
 def tipo_sala(sala):
+    '''
+    pre: recibe una sala representada por una lista con sus datos.
+    pos: devuelve el tipo de sala almacenado en la posicion 3 si es valido; de lo contrario, calcula el tipo segun el id de la sala.
+    '''
     if len(sala) > 3 and sala[3] in TIPOS_SALA:
         return sala[3]
     return ((sala[0] - 1) // 2) % len(TIPOS_SALA) + 1
 
 
 def capacidad_valida(tipo, capacidad):
+    '''
+    pre: recibe el tipo de sala y la capacidad que se desea validar.
+    pos: devuelve True si la capacidad esta dentro del minimo y maximo permitido para ese tipo de sala y False en caso contrario.
+    '''
     datos_tipo = TIPOS_SALA[tipo]
     return datos_tipo["capacidad_minima"] <= capacidad <= datos_tipo["capacidad_maxima"]
 
 
 def _letra_sala(indice):
+    '''
+    pre: recibe un indice entero que representa la posicion de una sala.
+    pos: devuelve una letra o combinacion de letras equivalente a esa posicion, comenzando desde A.
+    '''
     letras = ""
     numero = indice + 1
     while numero:
@@ -70,6 +102,10 @@ def _letra_sala(indice):
 
 
 def _actualizar_nombres_salas(matriz):
+    '''
+    pre: recibe una matriz de salas, donde cada fila contiene el id, nombre, capacidad y tipo.
+    pos: ordena las salas por tipo e id, actualiza el tipo y asigna nombres consecutivos a cada sala segun su categoria.
+    '''
     cantidades = {tipo: 0 for tipo in TIPOS_SALA}
     for sala in sorted(matriz, key=lambda elemento: (tipo_sala(elemento), elemento[0])):
         tipo = tipo_sala(sala)
@@ -79,6 +115,10 @@ def _actualizar_nombres_salas(matriz):
 
 
 def _cargar_salas():
+    '''
+    pre: utiliza el archivo de salas definido en ARCHIVO_SALAS y la estructura global salas.
+    pos: lee y valida los datos del archivo, carga las salas en la matriz global y actualiza sus nombres. si ocurre un error de lectura o validacion, deshabilita la persistencia e informa el problema.
+    '''
     global _persistencia_salas_habilitada
     if not os.path.exists(ARCHIVO_SALAS):
         print(f"No se encontro el archivo de salas: {ARCHIVO_SALAS}")
@@ -116,6 +156,10 @@ def _cargar_salas():
 
 
 def _guardar_salas(matriz):
+    '''
+    pre: recibe una matriz de salas con los datos de cada una.
+    pos: guarda las salas en un archivo temporal y luego reemplaza el archivo original. solo permite guardar la matriz global salas y, si ocurre un error, intenta eliminar el archivo temporal e informa el problema.
+    '''
     if matriz is not salas:
         return
     if not _persistencia_salas_habilitada:
@@ -141,11 +185,19 @@ _cargar_salas()
 
 
 def cantidad_salas_tipo(tipo, matriz=None):
+    '''
+    pre: recibe un tipo de sala y opcionalmente una matriz de salas.
+    pos: devuelve la cantidad de salas que pertenecen al tipo indicado. si no recibe una matriz, utiliza la matriz global salas.
+    '''
     matriz = salas if matriz is None else matriz
     return sum(1 for sala in matriz if tipo_sala(sala) == tipo)
 
 
 def actualizar_cantidad_tipos(matriz=None):
+    '''
+    pre: recibe opcionalmente una matriz de salas.
+    pos: actualiza la cantidad de salas registradas para cada tipo dentro del diccionario global TIPOS_SALA. si no recibe una matriz, utiliza la matriz global salas.
+    '''
     matriz = salas if matriz is None else matriz
     for tipo in TIPOS_SALA:
         TIPOS_SALA[tipo]["cantidad"] = cantidad_salas_tipo(tipo, matriz)
@@ -165,6 +217,10 @@ matriz_disponibilidad = [
 
 
 def mostrar_matriz():
+    '''
+    pre: utiliza la matriz global salas, la matriz de disponibilidad y la lista de dias.
+    pos: muestra por pantalla la disponibilidad de cada sala para los distintos dias de la semana, indicando que 1 representa disponible y 0 ocupado.
+    '''
     print("\nMatriz de disponibilidad por sala y dia")
     print("=" * 102)
 
@@ -182,6 +238,10 @@ def mostrar_matriz():
 
 
 def fecha_maxima_consulta(fecha_actual=None):
+    '''
+    pre: recibe opcionalmente una fecha actual.
+    pos: devuelve la fecha maxima que se puede consultar, correspondiente a seis meses despues de la fecha recibida o de la fecha actual del sistema.
+    '''
     fecha_actual = fecha_actual or datetime.date.today()
     mes = fecha_actual.month + 6
     anio = fecha_actual.year + (mes - 1) // 12
@@ -192,11 +252,19 @@ def fecha_maxima_consulta(fecha_actual=None):
 
 
 def obtener_dias_mes(mes):
+    '''
+    pre: recibe el numero de un mes del año.
+    pos: devuelve la cantidad de dias correspondiente al mes indicado o 0 si el numero de mes no es valido.
+    '''
     dias_por_mes = {1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31}
     return dias_por_mes.get(mes, 0)
 
 
 def mes_consultable(anio, mes, fecha_hoy=None, fecha_maxima=None):
+    '''
+        pre: recibe un año, un mes y opcionalmente las fechas de inicio y limite de consulta.
+        pos: devuelve True si el mes se encuentra dentro del periodo consultable y False si las fechas o el mes no son validos.
+    '''
     fecha_hoy = fecha_hoy or datetime.date.today()
     fecha_maxima = fecha_maxima or fecha_maxima_consulta(fecha_hoy)
     if anio < 1 or not 1 <= mes <= 12:
@@ -210,6 +278,10 @@ def mes_consultable(anio, mes, fecha_hoy=None, fecha_maxima=None):
 
 
 def contar_reservas_por_tamanio(anio, mes, dia, tamaño):
+    '''
+    pre: recibe un año, mes, dia y tipo de sala.
+    pos: devuelve una tupla con la cantidad de reservas registradas para esa fecha y tipo de sala, y la cantidad de salas disponibles de ese tipo.
+    '''
     fecha = f"{dia:02d}/{mes:02d}/{anio}"
     cantidad = 0
     for reserva in reservas:
@@ -219,6 +291,10 @@ def contar_reservas_por_tamanio(anio, mes, dia, tamaño):
 
 
 def estado_horario(anio, mes, dia, tamaño, hora_inicio):
+    '''
+    pre: recibe una fecha, un tipo de sala y la hora de inicio de un bloque horario de dos horas.
+    pos: cuenta las reservas que se superponen con el horario indicado y devuelve un texto coloreado que informa si esta libre, parcialmente ocupada u ocupada.
+    '''
     fecha = f"{dia:02d}/{mes:02d}/{anio}"
     hora_fin = hora_inicio + 2
     capacidad = cantidad_salas_tipo(tamaño)
@@ -250,6 +326,10 @@ def estado_horario(anio, mes, dia, tamaño, hora_inicio):
 
 
 def consultar_disponibilidad_mensual():
+    '''
+    pre: utiliza las reservas, los tipos de sala y las funciones de consulta de fechas y disponibilidad.
+    pos: solicita un año, mes, dia de inicio y cantidad de dias dentro del periodo consultable. luego muestra por pantalla la disponibilidad de los distintos tipos de sala en bloques horarios de dos horas.
+    '''
     fecha_hoy = datetime.date.today()
     fecha_maxima = fecha_maxima_consulta(fecha_hoy)
 
@@ -355,9 +435,8 @@ def consultar_disponibilidad_mensual():
 
 def imprimir_Salas(matriz):
     '''
-    pre: recibe una matriz de salas, donde cada fila representa una sala con sus datos
-         [id_sala, nombre_sala, capacidad, tipo].
-    pos: devuelve por pantalla la matriz de salas fomateada.
+    pre: recibe una matriz de salas, donde cada fila representa una sala con sus datos [id_sala, nombre_sala, capacidad, tipo].
+    pos: muestra por pantalla los datos de las salas en formato de tabla, incluyendo su identificador, nombre, capacidad y tipo.
     '''
     print("=" * 48)
     print(f"{'Salas':35}")
@@ -376,10 +455,8 @@ def imprimir_Salas(matriz):
 
 def agregar_Sala(matriz):
     '''
-    pre: recibe una matriz de salas, donde cada fila representa una sala con sus datos
-         [id_sala, nombre_sala, capacidad, tipo].
-    pos: solicita los datos para registrar una nueva sala. si el id ya existe, muestra error y finaliza. si el id es unico, 
-         agrega la sala con el nombre que corresponde a su posicion y muestra un mensaje de exito.
+    pre: recibe una matriz de salas, donde cada fila representa una sala con sus datos [id_sala, nombre_sala, capacidad, tipo].
+    pos: solicita el tipo de sala que se desea agregar. asigna un id consecutivo y la capacidad maxima permitida para ese tipo, actualiza los nombres y las cantidades, guarda los cambios y muestra un mensaje de exito.
     '''
     while True:
         print("Seleccione el tipo de sala:")
@@ -405,10 +482,8 @@ def agregar_Sala(matriz):
 
 def eliminar_Sala(matriz):
     '''
-        pre: recibe una matriz de salas, donde cada fila representa una sala con sus datos
-             [id_sala, nombre_sala, capacidad, tipo].
-        pos: solicita un id de sala por consola. si el id existe en la matriz, elimina la sala de 
-             la matriz original y muestra un mensaje de exito. si no existe, muestra un mensaje de error.
+    pre: recibe una matriz de salas, donde cada fila representa una sala con sus datos [id_sala, nombre_sala, capacidad, tipo].
+    pos: solicita el id de una sala y, si existe, la elimina de la matriz, actualiza los nombres y las cantidades, guarda los cambios y muestra un mensaje de exito. si no existe, informa el error.
     '''
     while True:
         id_input = input("Ingresar Id o -1 para volver al menu principal: ").strip()
@@ -435,10 +510,8 @@ def eliminar_Sala(matriz):
 
 def modificar_Sala(matriz):
     '''
-        pre: recibe una matriz de salas, donde cada fila representa una sala con sus datos
-             [id_sala, nombre_sala, capacidad, tipo].
-        pos: solicita un id de sala por consola. si lo encuentra, permite modificar el id y la capacidad.
-             si el id no existe, la funcion termina sin realizar cambios.
+    pre: recibe una matriz de salas, donde cada fila representa una sala con sus datos [id_sala, nombre_sala, capacidad, tipo].
+    pos: solicita el id de una sala y permite modificar su capacidad dentro del rango permitido para su tipo. luego actualiza los nombres y las cantidades, guarda los cambios y muestra un mensaje de exito.
     '''
     while True:
         id_buscado_input = input("Ingresar id de la sala a modificar o -1 para volver al menu principal: ").strip()
