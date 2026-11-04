@@ -16,6 +16,7 @@ def menu_usuario_logueado(usuario):
     pos: muestra el menu de opciones para usuarios comunes y permite realizar reservas, consultar, modificar o cancelar reservas, consultar la disponibilidad mensual y cerrar sesion.
     '''
     while True:
+        Reservas.limpiar_reservas_vencidas()
         print(f"\n=== Bienvenido/a {usuario['nombre']} (ID {usuario['id']}) ===")
         print("1. Reservar sala")
         print("2. Mostrar reservas")
@@ -54,6 +55,7 @@ def menu_admin(usuario):
     pos: muestra el menu de administrador y permite gestionar salas, gestionar usuarios, consultar reportes estadisticos, consultar la disponibilidad mensual y cerrar sesion.
     '''
     while True:
+        Reservas.limpiar_reservas_vencidas()
         print(f"\n=== Menu administrador: {usuario['nombre']} ===")
         print("1. Gestionar salas")
         print("2. Gestionar usuarios")
@@ -90,6 +92,7 @@ def menu_principal():
     pos: muestra el menu principal y permite registrar usuarios, iniciar sesion o salir del sistema. segun el rol del usuario que inicia sesion, dirige al menu correspondiente.
     '''
     while True:
+        Reservas.limpiar_reservas_vencidas()
         print("\n=== Sistema de reserva de salas ===")
         print("1. Registrar usuario")
         print("2. Iniciar sesion")
@@ -121,6 +124,7 @@ def menu_salas(matriz):
     pos: muestra el menu de gestion de salas y permite agregar, listar, modificar o eliminar salas, o volver al menu anterior.
     '''
     while True:
+        Reservas.limpiar_reservas_vencidas()
         print(f"\n=== Gestion de salas ===")
         print("1. Alta de sala")
         print("2. Listar salas")
@@ -155,6 +159,7 @@ def menu_usuarios(matriz, administrador):
     pos: muestra el menu de gestion de usuarios y permite registrar, listar, modificar o eliminar usuarios. si el administrador tiene id 1, tambien permite asignar o quitar roles de administrador.
     '''
     while True:
+        Reservas.limpiar_reservas_vencidas()
         print(f"\n=== Gestion de usuarios ===")
         print("1. Alta de usuario")
         print("2. Listar usuarios")

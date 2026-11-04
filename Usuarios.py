@@ -505,12 +505,12 @@ def gestionar_rol_administrador(matriz_usuarios, administrador):
     _guardar_usuarios(matriz_usuarios)
 
 
-def buscar_usuario(nombre, contrasena, posicion=0):
+def buscar_usuario(nombre, contrasena=None, posicion=0):
     '''
-    pre: recibe un nombre de usuario, una contrasena y una posicion inicial
-         para recorrer el diccionario global de usuarios.
-    pos: busca recursivamente un usuario que coincida con el nombre y la
-         contrasena ingresados. Devuelve un diccionario con sus datos e ID
+    pre: recibe un nombre de usuario, opcionalmente una contrasena y una
+         posicion inicial para recorrer el diccionario global de usuarios.
+    pos: busca recursivamente un usuario que coincida con el nombre y, si se
+         indica, con la contrasena. Devuelve un diccionario con sus datos e ID
          si encuentra una coincidencia, o None si no existe.
     '''
     ids = list(usuarios.keys())
@@ -524,7 +524,9 @@ def buscar_usuario(nombre, contrasena, posicion=0):
     nombre_buscado = normalizar_usuario(nombre).lower()
     nombre_usuario = normalizar_usuario(usuario["nombre"]).lower()
 
-    if nombre_usuario == nombre_buscado and usuario["contrasena"] == contrasena:
+    if nombre_usuario == nombre_buscado and (
+        contrasena is None or usuario["contrasena"] == contrasena
+    ):
         resultado = {"id": id_usuario}
         for clave in usuario:
             resultado[clave] = usuario[clave]
@@ -594,20 +596,37 @@ def iniciar_sesion():
         nombre = input("Usuario  (-1 para volver): ").strip()
         if volver_al_menu(nombre):
             return None
-        contrasena = input("Contrasena: ")
-        usuario = buscar_usuario(nombre, contrasena)
-        if usuario is not None:
-            if usuario.get("rol") not in ROLES:
-                print("El usuario tiene un rol invalido.")
-                return None
-            datos_guardados = usuarios.get(usuario["id"], {})
-            if not datos_guardados.get("contrasena"):
-                print("Esta cuenta todavia no tiene contrasena configurada. Contacte al administrador o registre una contrasena desde su gestion de usuarios.")
-                return None
-            print(f"Bienvenido/a, {usuario['nombre']} ({usuario['rol']})")
-            return usuario
-        intentos += 1
-        print(f"Usuario o contrasena incorrectos. Intentos restantes: {MAX_INTENTOS - intentos}")
+
+        usuario = buscar_usuario(nombre)
+        if usuario is None:
+            intentos += 1
+            print(
+                f"Usuario no existente. Intentos restantes: "
+                f"{MAX_INTENTOS - intentos}"
+            )
+            continue
+
+        if usuario.get("rol") not in ROLES:
+            print("El usuario tiene un rol invalido.")
+            return None
+        if not usuario.get("contrasena"):
+            print("Esta cuenta todavia no tiene contrasena configurada. Contacte al administrador o registre una contrasena desde su gestion de usuarios.")
+            return None
+
+        while intentos < MAX_INTENTOS:
+            contrasena = input("Contrasena: ")
+            if contrasena == usuario["contrasena"]:
+                print(f"Bienvenido/a, {usuario['nombre']} ({usuario['rol']})")
+                return usuario
+
+            intentos += 1
+            print(
+                f"Contrasena incorrecta. Intentos restantes: "
+                f"{MAX_INTENTOS - intentos}"
+            )
+            if intentos == MAX_INTENTOS:
+                break
+
     print("Se alcanzo el maximo de intentos.")
     return None
 

@@ -41,6 +41,11 @@ def _cargar_reservas():
                 fecha, inicio, fin = fila[3:]
                 if tipo_sala not in (1, 2, 3):
                     raise ValueError(f"Tipo de sala invalido en la linea {numero_linea}.")
+                datetime.datetime.strptime(f"{fecha} {fin}", "%d/%m/%Y %H:%M")
+                hora_inicio = datetime.datetime.strptime(inicio, "%H:%M")
+                hora_fin = datetime.datetime.strptime(fin, "%H:%M")
+                if hora_fin <= hora_inicio:
+                    raise ValueError(f"Horario invalido en la linea {numero_linea}.")
                 reservas_cargadas.append(
                     [id_reserva, tipo_sala, id_usuario, fecha, inicio, fin]
                 )
@@ -50,6 +55,27 @@ def _cargar_reservas():
         return
 
     reservas.extend(reservas_cargadas)
+    limpiar_reservas_vencidas()
+
+
+def limpiar_reservas_vencidas(ahora=None, persistir=True):
+    '''
+    pre: recibe opcionalmente la fecha y hora actual.
+    pos: elimina de la matriz y del archivo las reservas cuyo horario de fin
+         ya paso.
+    '''
+    ahora = datetime.datetime.now() if ahora is None else ahora
+    reservas_vigentes = [
+        reserva
+        for reserva in reservas
+        if datetime.datetime.strptime(
+            f"{reserva[3]} {reserva[5]}", "%d/%m/%Y %H:%M"
+        ) > ahora
+    ]
+    if len(reservas_vigentes) != len(reservas):
+        reservas[:] = reservas_vigentes
+        if persistir:
+            _guardar_reservas(reservas)
 
 
 def _guardar_reservas(matriz):
@@ -63,6 +89,7 @@ def _guardar_reservas(matriz):
     '''
     if matriz is not reservas:
         return
+    limpiar_reservas_vencidas(persistir=False)
     if not _persistencia_habilitada:
         print("No se guardaron los cambios porque el archivo de reservas no se pudo leer.")
         return
@@ -129,6 +156,7 @@ def reservas_por_usuario(matriz, usuario):
          una lista de tuplas que contiene el ID de cada reserva junto con
          sus datos completos.
     '''
+    limpiar_reservas_vencidas()
     filtradas = Funciones.filtrar_reservas_por_usuario(matriz, usuario)
     return [(reserva[0], reserva) for reserva in filtradas]
 
@@ -140,6 +168,7 @@ def imprimir_Reservas(matriz, usuario=None):
     pos: devuelve por pantalla la matriz de reservas formateada.
     '''
 
+    limpiar_reservas_vencidas()
     print("=" * 70)
     print(f"{'Reservas':42}")
     print("=" * 70)
@@ -330,6 +359,7 @@ def realizar_Reserva(matriz, id_usuario=0):
          agrega la nueva reserva a la matriz y guarda los cambios realizados.
     '''
 
+    limpiar_reservas_vencidas()
     import Salas
 
     opciones = []
@@ -393,6 +423,7 @@ def eliminar_Reserva(matriz, usuario=None):
          encuentra, informa el problema.
     '''
 
+    limpiar_reservas_vencidas()
     if usuario is None:
         print("Debe indicar el usuario para cancelar la reserva.")
         return
@@ -433,6 +464,7 @@ def modificar_Reserva(matriz, usuario=None):
          los cambios realizados.
     '''
 
+    limpiar_reservas_vencidas()
     if usuario is None:
         print("Debe indicar el usuario para modificar la reserva.")
         return

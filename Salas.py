@@ -1,21 +1,68 @@
 import csv
+import json
 import os
 import re
 import datetime 
 from Reservas import reservas
 
 ARCHIVO_SALAS = os.path.join(os.path.dirname(__file__), "salas.txt")
+ARCHIVO_CONFIGURACION_SALAS = os.path.join(
+    os.path.dirname(__file__), "tipo salas.json"
+)
 ARCHIVO_TEMPORAL_SALAS = ARCHIVO_SALAS + ".tmp"
 _persistencia_salas_habilitada = True
 salas = []
 
-TIPOS_SALA = {
-    1: {"nombre": "Pequeña", "cantidad": 0, "capacidad_minima": 2, "capacidad_maxima": 6},
-    2: {"nombre": "Mediana", "cantidad": 0, "capacidad_minima": 7, "capacidad_maxima": 12},
-    3: {"nombre": "Grande", "cantidad": 0, "capacidad_minima": 12, "capacidad_maxima": 24},
-}
 
-dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
+def _cargar_configuracion_salas():
+    try:
+        with open(ARCHIVO_CONFIGURACION_SALAS, "r", encoding="utf-8") as archivo:
+            configuracion = json.load(archivo)
+    except (OSError, UnicodeError, json.JSONDecodeError) as error:
+        raise RuntimeError(
+            f"No se pudo cargar la configuracion de salas: {error}"
+        ) from error
+
+    if not isinstance(configuracion, dict):
+        raise ValueError("La configuracion de salas debe ser un objeto JSON.")
+
+    tipos_configurados = configuracion.get("tipos_sala")
+    if not isinstance(tipos_configurados, dict) or not tipos_configurados:
+        raise ValueError("La configuracion debe incluir al menos un tipo de sala.")
+
+    tipos_sala = {}
+    for id_texto, datos in tipos_configurados.items():
+        try:
+            tipo = int(id_texto)
+        except (TypeError, ValueError) as error:
+            raise ValueError(f"Tipo de sala invalido en la configuracion: {id_texto}.") from error
+        if tipo < 1 or str(tipo) != id_texto or not isinstance(datos, dict):
+            raise ValueError(f"Tipo de sala invalido en la configuracion: {id_texto}.")
+
+        nombre = datos.get("nombre")
+        capacidad_minima = datos.get("capacidad_minima")
+        capacidad_maxima = datos.get("capacidad_maxima")
+        if (
+            not isinstance(nombre, str)
+            or not nombre.strip()
+            or type(capacidad_minima) is not int
+            or type(capacidad_maxima) is not int
+            or capacidad_minima < 1
+            or capacidad_maxima < capacidad_minima
+        ):
+            raise ValueError(f"Datos invalidos para el tipo de sala {tipo}.")
+
+        tipos_sala[tipo] = {
+            "nombre": nombre,
+            "cantidad": 0,
+            "capacidad_minima": capacidad_minima,
+            "capacidad_maxima": capacidad_maxima,
+        }
+
+    return tipos_sala
+
+
+TIPOS_SALA = _cargar_configuracion_salas()
 
 COLOR_VERDE = "\033[32m"
 COLOR_AMARILLO = "\033[33m"
@@ -206,37 +253,6 @@ def actualizar_cantidad_tipos(matriz=None):
 actualizar_cantidad_tipos()
 
 
-matriz_disponibilidad = [
-    [1, 1, 0, 1, 1, 0, 1],
-    [0, 1, 1, 1, 0, 1, 1],
-    [1, 0, 1, 0, 1, 1, 1],
-    [0, 1, 0, 1, 1, 1, 1],
-    [1, 0, 1, 0, 1, 1, 1],
-    [1, 0, 0, 0, 0, 0, 0],
-]
-
-
-def mostrar_matriz():
-    '''
-    pre: utiliza la matriz global salas, la matriz de disponibilidad y la lista de dias.
-    pos: muestra por pantalla la disponibilidad de cada sala para los distintos dias de la semana, indicando que 1 representa disponible y 0 ocupado.
-    '''
-    print("\nMatriz de disponibilidad por sala y dia")
-    print("=" * 102)
-
-    encabezado = f"{'Sala':<25}" + "".join(f"{d:<11}" for d in dias)
-    print(encabezado)
-    print("-" * len(encabezado))
-
-    for i in range(len(salas)):
-        nombre = salas[i][1]
-        etiqueta = nombre
-        disponibilidad = matriz_disponibilidad[i % len(matriz_disponibilidad)]
-        fila = f"{etiqueta:<25}" + "".join(f"{disponibilidad[j]:<11}" for j in range(len(dias)))
-        print(fila)
-    print("\nAclaracion: 1 = disponible, 0 = ocupado")
-
-
 def fecha_maxima_consulta(fecha_actual=None):
     '''
     pre: recibe opcionalmente una fecha actual.
@@ -330,6 +346,9 @@ def consultar_disponibilidad_mensual():
     pre: utiliza las reservas, los tipos de sala y las funciones de consulta de fechas y disponibilidad.
     pos: solicita un año, mes, dia de inicio y cantidad de dias dentro del periodo consultable. luego muestra por pantalla la disponibilidad de los distintos tipos de sala en bloques horarios de dos horas.
     '''
+    from Reservas import limpiar_reservas_vencidas
+
+    limpiar_reservas_vencidas()
     fecha_hoy = datetime.date.today()
     fecha_maxima = fecha_maxima_consulta(fecha_hoy)
 

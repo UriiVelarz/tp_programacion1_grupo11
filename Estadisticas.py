@@ -437,6 +437,7 @@ def menu_estadisticas(reservas=None, salas=None, usuarios=None):
         usuarios = Usuarios.usuarios
 
     while True:
+        Reservas.limpiar_reservas_vencidas()
         print(f"\n=== Reportes estadisticos ===")
         print("1. Resumen general")
         print("2. Resumen por periodo")
