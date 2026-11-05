@@ -530,7 +530,7 @@ def eliminar_Sala(matriz):
 def modificar_Sala(matriz):
     '''
     pre: recibe una matriz de salas, donde cada fila representa una sala con sus datos [id_sala, nombre_sala, capacidad, tipo].
-    pos: solicita el id de una sala y permite modificar su capacidad dentro del rango permitido para su tipo. luego actualiza los nombres y las cantidades, guarda los cambios y muestra un mensaje de exito.
+    pos: solicita el id de una sala y permite modificar su tipo y capacidad dentro del rango permitido para ese tipo. luego actualiza los nombres y las cantidades, guarda los cambios y muestra un mensaje de exito.
     '''
     while True:
         id_buscado_input = input("Ingresar id de la sala a modificar o -1 para volver al menu principal: ").strip()
@@ -551,7 +551,20 @@ def modificar_Sala(matriz):
             break
         print("Sala no encontrada. Intente nuevamente.")
 
-    nuevo_tipo = tipo_sala(fila_encontrada)
+    while True:
+        print("Seleccione el nuevo tipo de sala:")
+        for tipo, datos_tipo in TIPOS_SALA.items():
+            print(f"{tipo}. {datos_tipo['nombre']}")
+        tipo_input = input(
+            "Ingresar opcion o -1 para volver al menu principal: "
+        ).strip()
+        if tipo_input == "-1":
+            return
+        nuevo_tipo = convertir_entero(tipo_input)
+        if nuevo_tipo in TIPOS_SALA:
+            break
+        print("Opcion invalida. Seleccione un tipo de sala disponible.")
+
     datos_tipo = TIPOS_SALA[nuevo_tipo]
     while True:
         capacidad_input = input(
@@ -567,6 +580,7 @@ def modificar_Sala(matriz):
             f"La capacidad para salas {datos_tipo['nombre'].lower()} debe estar entre "
             f"{datos_tipo['capacidad_minima']} y {datos_tipo['capacidad_maxima']} personas."
         )
+    fila_encontrada[3] = nuevo_tipo
     fila_encontrada[2] = capacidad
     _actualizar_nombres_salas(matriz)
     actualizar_cantidad_tipos(matriz)

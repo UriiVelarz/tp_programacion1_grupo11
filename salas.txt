@@ -1,5 +1,5 @@
 id_sala;nombre;capacidad;tipo
-1;Sala pequeña A;2;1
+1;Sala pequeña A;5;1
 2;Sala pequeña B;2;1
 3;Sala mediana A;7;2
 4;Sala mediana B;7;2

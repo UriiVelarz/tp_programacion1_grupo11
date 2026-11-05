@@ -82,6 +82,28 @@ def test_configuracion_de_tipos_sala():
     )
 
 
+def test_modificar_sala_cambia_tipo_y_valida_capacidad():
+    matriz = [[1, "Sala pequeña A", 6, 1]]
+    cantidades_originales = {
+        tipo: datos["cantidad"] for tipo, datos in Salas.TIPOS_SALA.items()
+    }
+    entradas = ["1", "3", "7", "18"]
+    salida = StringIO()
+    try:
+        with patch("builtins.input", side_effect=entradas), \
+                patch("Salas._guardar_salas") as guardar, \
+                redirect_stdout(salida):
+            Salas.modificar_Sala(matriz)
+
+        assert matriz[0] == [1, "Sala grande A", 18, 3]
+        assert "debe estar entre 12 y 24 personas" in salida.getvalue()
+        guardar.assert_called_once_with(matriz)
+        assert Salas.TIPOS_SALA[3]["cantidad"] == 1
+    finally:
+        for tipo, cantidad in cantidades_originales.items():
+            Salas.TIPOS_SALA[tipo]["cantidad"] = cantidad
+
+
 def test_inicio_sesion_reintenta_sin_pedir_usuario_otra_vez():
     usuarios_originales = Usuarios.usuarios
     Usuarios.usuarios = {
@@ -175,7 +197,7 @@ def test_reservas_finalizadas_se_eliminan_y_persisten():
 
 
 if __name__ == "__main__":
-    tests = [test_volver_al_menu, test_normalizar_usuario, test_nombre_valido, test_contrasena_valida, test_mail_valido, test_configuracion_de_tipos_sala, test_inicio_sesion_reintenta_sin_pedir_usuario_otra_vez, test_salas_agregadas_y_eliminadas_se_persisten, test_reservas_finalizadas_se_eliminan_y_persisten]
+    tests = [test_volver_al_menu, test_normalizar_usuario, test_nombre_valido, test_contrasena_valida, test_mail_valido, test_configuracion_de_tipos_sala, test_modificar_sala_cambia_tipo_y_valida_capacidad, test_inicio_sesion_reintenta_sin_pedir_usuario_otra_vez, test_salas_agregadas_y_eliminadas_se_persisten, test_reservas_finalizadas_se_eliminan_y_persisten]
 
     fallidos = 0
     for test in tests:
