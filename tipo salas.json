@@ -1,0 +1,19 @@
+{
+  "tipos_sala": {
+    "1": {
+      "nombre": "Pequeña",
+      "capacidad_minima": 2,
+      "capacidad_maxima": 6
+    },
+    "2": {
+      "nombre": "Mediana",
+      "capacidad_minima": 7,
+      "capacidad_maxima": 12
+    },
+    "3": {
+      "nombre": "Grande",
+      "capacidad_minima": 12,
+      "capacidad_maxima": 24
+    }
+  }
+}
