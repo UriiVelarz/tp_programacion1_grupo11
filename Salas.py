@@ -363,7 +363,7 @@ def consultar_disponibilidad_mensual():
             if anio is not None and fecha_hoy.year <= anio <= fecha_maxima.year:
                 break
         print(
-            f"Mes fuera de rango. El periodo disponible va desde "
+            f"Año fuera de rango. El periodo disponible va desde "
             f"{fecha_hoy:%d/%m/%Y} hasta {fecha_maxima:%d/%m/%Y}. Ingrese el año nuevamente."
         )
 
@@ -389,18 +389,21 @@ def consultar_disponibilidad_mensual():
         dia_inicio_input = input("Ingrese el dia de inicio (o -1 para volver): ").strip()
         if dia_inicio_input == "-1":
             return
+        fecha_inicio = None
         if dia_inicio_input.isdigit():
             dia_inicio = convertir_entero(dia_inicio_input)
             try:
                 fecha_inicio = datetime.date(anio, mes, dia_inicio)
             except (TypeError, ValueError):
                 fecha_inicio = None
-            if (
-                fecha_inicio is not None
-                and fecha_hoy <= fecha_inicio <= fecha_maxima
-            ):
-                break
-        print("El dia debe ser valido y estar dentro de los proximos 6 meses.")
+        if fecha_inicio is None:
+            print("Fecha fuera de rango.")
+        elif fecha_inicio < fecha_hoy:
+            print("Error: no se puede consultar una fecha pasada.")
+        elif fecha_inicio > fecha_maxima:
+            print("Error: no se puede consultar una fecha que supere los 6 meses permitidos.")
+        else:
+            break
 
     while True:
         max_dias = min(30, (fecha_maxima - fecha_inicio).days + 1)

@@ -82,6 +82,38 @@ def test_configuracion_de_tipos_sala():
     )
 
 
+def test_consultar_disponibilidad_informa_el_tipo_de_fecha_fuera_de_rango():
+    fecha_original = datetime.date
+
+    class FechaFija(fecha_original):
+        @classmethod
+        def today(cls):
+            return cls(2026, 11, 6)
+
+    casos = [
+        (["2025", "-1"], "Año fuera de rango."),
+        (["2026", "10", "-1"], "Mes fuera de rango."),
+        (
+            ["2026", "11", "5", "-1"],
+            "Error: no se puede consultar una fecha pasada.",
+        ),
+        (["2026", "11", "32", "-1"], "Fecha fuera de rango."),
+        (
+            ["2027", "5", "7", "-1"],
+            "Error: no se puede consultar una fecha que supere los 6 meses permitidos.",
+        ),
+    ]
+
+    with patch("Salas.datetime.date", FechaFija), \
+            patch("Reservas.limpiar_reservas_vencidas"):
+        for entradas, mensaje in casos:
+            salida = StringIO()
+            with patch("builtins.input", side_effect=entradas), \
+                    redirect_stdout(salida):
+                Salas.consultar_disponibilidad_mensual()
+            assert mensaje in salida.getvalue()
+
+
 def test_modificar_sala_cambia_tipo_y_valida_capacidad():
     matriz = [[1, "Sala pequeña A", 6, 1]]
     cantidades_originales = {

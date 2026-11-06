@@ -417,6 +417,22 @@ def pedir_periodo():
 
         return (fecha_desde, fecha_hasta)
 
+def clientes_sin_reservas(reservas, usuarios):
+    '''
+    pre: recibe una matriz de reservas y un diccionario de usuarios.
+    pos: devuelve un conjunto con los IDs de los clientes que no tienen
+         ninguna reserva, usando la diferencia entre dos conjuntos.
+    '''
+    clientes = set()
+    for id_usuario, datos in usuarios.items():
+        if datos["rol"] == "cliente":
+            clientes.add(id_usuario)
+
+    con_reservas = set()
+    for reserva in reservas:
+        con_reservas.add(reserva[2])
+
+    return clientes - con_reservas
 
 def menu_estadisticas(reservas=None, salas=None, usuarios=None):
     '''
@@ -449,6 +465,7 @@ def menu_estadisticas(reservas=None, salas=None, usuarios=None):
         print("8. Promedio diario de reservas")
         print("9. Promedio de reservas por sala")
         print("10. Categorias con mas y menos reservas")
+        print("11. Clientes sin reservas")
         print("0. Volver")
         opcion = input("Seleccione una opcion: ").strip()
 
@@ -524,6 +541,15 @@ def menu_estadisticas(reservas=None, salas=None, usuarios=None):
                 print("Tipo(s) con mas reservas: " f"{unir_tipos(tipos_max)} -> {maximo}")
                 print("Tipo(s) con menos reservas: " f"{unir_tipos(tipos_min)} -> {minimo}")
 
+        elif opcion == "11":
+            sin_reservas = clientes_sin_reservas(reservas, usuarios)
+            if sin_reservas:
+                print("Clientes sin reservas:")
+                for id_usuario in sin_reservas:
+                    print(nombre_usuario(usuarios, id_usuario))
+            else:
+                
+                print("Todos los clientes tienen reservas.")
         elif opcion == "0":
             return
 
