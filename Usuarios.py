@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import Reservas
 
 usuarios = {}
 
@@ -368,6 +369,8 @@ def eliminar_Usuario(usuarios):
     if id_usuario in usuarios:
         del usuarios[id_usuario]
         _guardar_usuarios(usuarios)
+        Reservas.reservas[:] = [r for r in Reservas.reservas if r[2] != id_usuario]
+        Reservas._guardar_reservas(Reservas.reservas)
         print("Usuario eliminado correctamente.")
     else:
         print("No se encontro el ID de usuario.")
